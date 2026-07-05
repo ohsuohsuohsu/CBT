@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT Voyage</title>
+<style>
+  body { font-family: 'Quicksand', 'Rounded Mplus 1c', 'Helvetica Neue', sans-serif; background-color: #fff9f5; color: #5c4a44; text-align: center; padding: 20px 10px; margin: 0; }
+  .container { background-color: #ffffff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(200, 180, 170, 0.2); max-width: 440px; margin: 0 auto; border: 2px solid #ffe8df; position: relative; text-align: left; }
+  h1 { color: #d68f84; font-size: 1.5em; margin-bottom: 5px; text-align: center; margin-top: 10px; }
+  .urgency { color: #a4817a; font-size: 0.9em; margin-bottom: 20px; background-color: #fff0eb; padding: 12px; border-radius: 12px; text-align: center; font-weight: bold;}
+  .countdown-time { font-size: 1.4em; color: #d68f84; display: block; margin-top: 5px; font-variant-numeric: tabular-nums; }
+
+  /* タブ */
+  .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #fff0eb; padding-bottom: 10px; }
+  .tab-btn { background: #fff0eb; border: none; font-size: 0.8em; font-weight: bold; color: #a4817a; cursor: pointer; padding: 8px 10px; border-radius: 15px; transition: all 0.2s; }
+  .tab-btn.active { color: #fff; background-color: #d68f84; box-shadow: 0 2px 5px rgba(214, 143, 132, 0.4); }
+  .tab-content { display: none; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
+
+  /* TODO */
+  .todo-box { background-color: #fcf8f6; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #ebdcd5; text-align: left; }
+  .todo-box h3 { color: #d68f84; font-size: 1.05em; border-bottom: 2px solid #fff0eb; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; }
+  .todo-list { list-style: none; padding: 0; margin: 0 0 15px 0; }
+  .todo-list li { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9em; color: #5c4a44; background: #fff; padding: 8px; border-radius: 8px; border: 1px solid #ffe8df;}
+  .todo-list li.completed span { text-decoration: line-through; color: #a4817a; opacity: 0.7; }
+  .todo-list input[type="checkbox"] { margin-right: 10px; accent-color: #a4d3c2; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;}
+  .todo-text { flex-grow: 1; word-break: break-all; }
+  .todo-input-group { display: flex; gap: 5px; margin-bottom: 15px;}
+  .todo-input-group input { flex: 1; padding: 8px; border: 1px solid #ffe8df; border-radius: 8px; font-family: inherit;}
+  .todo-input-group button { background-color: #a4d3c2; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold;}
+  .btn-move { margin-right: 5px; font-size: 0.8em; background: #fff0eb; border: none; border-radius: 4px; color: #d68f84; cursor: pointer; padding: 4px 8px; font-weight: bold; flex-shrink: 0;}
+  .btn-del { background: none; border: none; color: #ff6b6b; cursor: pointer; font-size: 1.2em; padding: 0 5px; flex-shrink: 0;}
+
+  /* 統計・記録 */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .motivation-box { display: flex; flex-direction: column; gap: 6px; background-color: #fff7f2; border: 2px dashed #ffb6a3; padding: 10px 14px; border-radius: 14px; margin-bottom: 15px; text-align: center; }
+  .streak-display { font-weight: bold; color: #e2725b; font-size: 0.95em; }
+  .goal-gap { font-weight: bold; font-size: 0.95em; color: #d68f84; }
+  .stat-card { background: #faf3f0; border: 1px dashed #d68f84; padding: 10px; border-radius: 12px; text-align: center; }
+  .stat-label { font-size: 0.75em; color: #a4817a; font-weight: bold; }
+  .stat-val { font-size: 1.1em; color: #d68f84; font-weight: bold; margin-top: 5px; font-variant-numeric: tabular-nums;}
+  .stat-card.full { grid-column: span 2; }
+
+  .record-box { background-color: #faf3f0; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d68f84; text-align: center; }
+  .record-title { font-size: 1em; color: #a4817a; font-weight: bold; margin-bottom: 5px;}
+  #total-time { font-size: 2.8em; font-weight: bold; color: #d68f84; font-variant-numeric: tabular-nums; margin: 5px 0; }
+  .time-adjust-btns { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+  .btn-adjust { background-color: #fff; border: 1px solid #d68f84; color: #d68f84; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; cursor: pointer; font-weight: bold;}
+  
+  #current-session { font-size: 1.2em; color: #8e7a76; margin-bottom: 5px; font-variant-numeric: tabular-nums; text-align: center; }
+  .elapsed-info { font-size: 0.85em; color: #a4817a; margin-bottom: 10px; font-weight: bold;}
+  .btn-main { background-color: #ffb6a3; color: white; border: none; padding: 15px; font-size: 1.2em; border-radius: 12px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.3s; box-shadow: 0 4px 0 #e59985; }
+  .btn-main:active { transform: translateY(4px); box-shadow: 0 0 0 #e59985; }
+  .btn-main.running { background-color: #a4d3c2; box-shadow: 0 4px 0 #85bda8; }
+  #message { margin-top: 15px; font-weight: bold; color: #8e7a76; min-height: 40px; font-size: 0.9em; text-align: center; }
+
+  /* 病院・世界一周マップ（立体ビジュアル版） */
+  .progress-box { background-color: #f7fbf9; border: 2px solid #a4d3c2; padding: 12px; border-radius: 15px; margin-bottom: 15px; text-align: center; }
+  .progress-title { font-weight: bold; color: #6db398; font-size: 1.1em; margin-bottom: 5px; }
+
+  /* --- 病院キャンパス（ぽこぽこ建つ町） --- */
+  .campus-outer { perspective: 900px; margin-bottom: 4px; }
+  .campus-stage {
+    transform: rotateX(8deg);
+    transform-origin: bottom center;
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0 8px, rgba(0,0,0,0.03) 8px 16px),
+      linear-gradient(180deg, #cdeccf 0%, #a8dba8 100%);
+    border: 4px solid #6fae6f;
+    border-radius: 16px;
+    padding: 12px 6px 8px;
+    box-shadow: 0 20px 25px -12px rgba(70,130,70,0.4);
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px 3px;
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .building-plot { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; min-width: 0; }
+  .building-plot.pop-in .building3d { animation: buildingPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .building3d { position: relative; width: 42px; height: 42px; margin-bottom: 3px; flex-shrink: 0; }
+  .b-roof { position: absolute; top: -2px; left: 2px; width: 0; height: 0; border-left: 19px solid transparent; border-right: 19px solid transparent; border-bottom: 12px solid #ef9a9a; filter: drop-shadow(1px 2px 0 rgba(0,0,0,0.08)); }
+  .b-body { position: absolute; top: 9px; left: 3px; width: 36px; height: 27px; background: linear-gradient(180deg,#ffffff,#f1f1f1); border: 2px solid #ddd; border-radius: 0 0 6px 6px; box-shadow: 2px 3px 0 rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; font-size: 1.1em; }
+  .b-shadow { position: absolute; bottom: -5px; left: 4px; width: 34px; height: 7px; background: rgba(0,0,0,0.18); border-radius: 50%; filter: blur(2px); }
+  .empty-lot { width: 38px; height: 32px; margin-bottom: 3px; background: repeating-linear-gradient(135deg, #9fd39f 0 6px, #8fca8f 6px 12px); border: 2px dashed #6fae6f; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.05em; opacity: 0.75; flex-shrink: 0; }
+  .building-name { font-size: 0.52em; font-weight: bold; color: #2e7d32; text-align: center; line-height: 1.2; word-break: keep-all; }
+  .building-name.faded { color: #6fae6f; opacity: 0.8; }
+  @keyframes buildingPop { 0% { transform: scale(0) translateY(24px); opacity: 0; } 65% { transform: scale(1.18) translateY(-6px); opacity: 1; } 100% { transform: scale(1) translateY(0); } }
+
+  /* --- 世界地図フライトマップ --- */
+  .map-outer { position: relative; border-radius: 16px; overflow: hidden; border: 4px solid #7fb8e8; box-shadow: 0 20px 25px -12px rgba(60,110,170,0.35); }
+  .map-svg-bg { display: block; width: 100%; height: auto; }
+  .map-overlay { position: absolute; inset: 0; }
+  .city-dot { position: absolute; transform: translate(-50%, -50%); font-size: 0.7em; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.55); border: 2px solid #b9d4ee; color: #9fb8d6; }
+  .city-dot.visited { background: #fff; border-color: #64b5f6; font-size: 1em; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+  .city-dot.current { border-color: #1e88e5; box-shadow: 0 0 0 4px rgba(30,136,229,0.25), 0 2px 6px rgba(0,0,0,0.3); animation: cityPulse 1.4s infinite; }
+  @keyframes cityPulse { 0%,100% { box-shadow: 0 0 0 4px rgba(30,136,229,0.25), 0 2px 6px rgba(0,0,0,0.3); } 50% { box-shadow: 0 0 0 9px rgba(30,136,229,0.08), 0 2px 6px rgba(0,0,0,0.3); } }
+  .city-label { position: absolute; transform: translate(-50%, 6px); font-size: 0.5em; font-weight: bold; color: #1565c0; white-space: nowrap; background: rgba(255,255,255,0.85); padding: 1px 4px; border-radius: 4px; pointer-events: none; }
+  .plane-marker { position: absolute; font-size: 1.5em; transform: translate(-50%, -50%); transition: left 1s linear, top 1s linear; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.35)); z-index: 5; }
+  .flight-path { fill: none; stroke: #ff8a65; stroke-width: 1.4; stroke-dasharray: 6 5; }
+
+  .photo-album-title { font-size: 0.85em; font-weight: bold; color: #5a94b5; margin: 12px 0 6px; }
+  .photo-album { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 260px; overflow-y: auto; padding-bottom: 4px; }
+  .photo-card { border-radius: 10px; padding: 10px 4px 8px; text-align: center; color: #fff; box-shadow: 0 3px 6px rgba(0,0,0,0.25); position: relative; }
+  .photo-card::before { content: "📌"; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); font-size: 0.9em; }
+  .photo-card.pop-in { animation: buildingPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .photo-icon { font-size: 1.6em; }
+  .photo-caption { font-size: 0.6em; font-weight: bold; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+  .photo-empty { grid-column: span 3; text-align: center; color: #90a4c8; font-size: 0.8em; padding: 20px 0; }
+
+  /* AI問題・SNS */
+  .quiz-box { background-color: #fffcfb; border: 2px solid #a4d3c2; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: left; }
+  .quiz-title { font-weight: bold; color: #6db398; margin-bottom: 10px; font-size: 1.1em; border-bottom: 1px solid #e0f0ea; padding-bottom: 5px; display: flex; justify-content: space-between;}
+  .btn-generate { background-color: #a4d3c2; color: white; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8em; font-weight: bold; box-shadow: 0 2px 0 #85bda8; }
+  .quiz-question { font-size: 0.95em; color: #5c4a44; margin-bottom: 15px; line-height: 1.5; white-space: pre-wrap; font-weight: bold;}
+  .options-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+  .option-btn { background-color: #ffffff; border: 2px solid #e0f0ea; color: #5c4a44; padding: 12px; border-radius: 10px; font-size: 0.9em; text-align: left; cursor: pointer; font-weight: bold; }
+  .option-btn.correct { background-color: #a4d3c2; color: white; border-color: #85bda8; }
+  .option-btn.wrong { background-color: #ffb6a3; color: white; border-color: #e59985; }
+  .answer-area { display: none; margin-top: 15px; font-size: 0.95em; background-color: #faf3f0; padding: 15px; border-radius: 10px; border: 1px dashed #d68f84;}
+  .exp-badge { display: inline-block; background-color: #8e7a76; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.8em; margin-bottom: 5px; }
+  .exp-text { color: #5c4a44; line-height: 1.5; font-size: 0.9em; white-space: pre-wrap; }
+  .btn-copy { background-color: #d68f84; color: white; border: none; padding: 8px; border-radius: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
+
+  .tweet-box { background-color: #fcf8f6; border: 1px solid #ebdcd5; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+  .tweet-box textarea { width: 100%; height: 60px; border: 1px solid #ffe8df; border-radius: 10px; padding: 8px; box-sizing: border-box; font-family: inherit; resize: none; color: #5c4a44; }
+  .btn-tweet { background-color: #d68f84; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; float: right; margin-top: 8px; font-size: 0.9em; }
+  .timeline { margin-top: 20px; max-height: 300px; overflow-y: auto; clear: both; }
+  .tweet-item { border-bottom: 1px solid #f5ebe6; padding: 12px 0; font-size: 0.95em; }
+  .tweet-user { font-weight: bold; color: #d68f84; font-size: 0.9em; }
+  .tweet-text { margin: 5px 0; line-height: 1.4; color: #5c4a44; white-space: pre-wrap; }
+  .reply-item { background-color: #f3f9f7; border-left: 3px solid #a4d3c2; padding: 8px 12px; margin-top: 8px; border-radius: 0 8px 8px 0; font-size: 0.9em; }
+  .reply-user { font-weight: bold; color: #529a80; font-size: 0.85em; margin-bottom: 3px; }
+
+  .calendar-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; }
+  .calendar-list li { padding: 8px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: center; color: #5c4a44; font-size: 0.9em; }
+  .calendar-list li span.time { font-weight: bold; color: #a4d3c2; }
+  .settings-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #d68f84; }
+  .settings-area { display: none; background-color: #fff0eb; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9em; }
+  .settings-area input { width: calc(100% - 20px); padding: 8px; margin-top: 5px; border: 1px solid #d68f84; border-radius: 5px; }
+  .settings-area textarea { width: calc(100% - 20px); padding: 8px; margin-top: 6px; border: 1px solid #d68f84; border-radius: 5px; font-size: 0.75em; font-family: monospace; resize: vertical; }
+  .settings-area button { margin-top: 10px; background-color: #d68f84; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold;}
+  .settings-area .migrate-block { margin-top: 16px; padding-top: 12px; border-top: 1px dashed #d68f84; }
+  
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    <h1>CBT Voyage 🩺✈️</h1>
+    
+    <div class="urgency">
+      10月15日の本番まで
+      <span id="countdown-display" class="countdown-time">計算中...</span>
+    </div>
+    
+    <div id="settings-area" class="settings-area">
+      <label>Gemini APIキーを入力:</label>
+      <input type="password" id="api-key-input">
+      <button onclick="saveApiKey()">保存</button>
+      <label style="display:block; margin-top:12px;">1日の目標勉強時間（時間）:</label>
+      <input type="number" id="daily-goal-input" step="0.5" min="0.5">
+      <button onclick="saveDailyGoal()">保存</button>
+
+      <div class="migrate-block">
+        <label>📤 引っ越し元でエクスポート（このサイトのデータを書き出す）:</label>
+        <button onclick="exportData()">エクスポート用データを作成</button>
+        <textarea id="export-output" readonly style="display:none;" rows="4" onclick="this.select()"></textarea>
+        <button id="copy-export-btn" onclick="copyExportData()" style="display:none;">コピーする</button>
+      </div>
+      <div class="migrate-block">
+        <label>📥 引っ越し先でインポート（貼り付けて読み込む）:</label>
+        <textarea id="import-input" placeholder="コピーしたテキストをここに貼り付け" rows="4"></textarea>
+        <button onclick="importData()">インポート実行</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('timer-tab', this)">⏱️ 記録</button>
+      <button class="tab-btn" onclick="switchTab('quiz-tab', this)">🩺 AI問題</button>
+      <button class="tab-btn" onclick="switchTab('sns-tab', this)">📱 CBT-X</button>
+      <button class="tab-btn" onclick="switchTab('hospital-tab', this)">🏥 病院建設</button>
+      <button class="tab-btn" onclick="switchTab('travel-tab', this)">✈️ マイル</button>
+    </div>
+
+    <div id="timer-tab" class="tab-content active">
+      <div class="motivation-box">
+        <div class="streak-display" id="streak-display">🔥 連続達成記録: 計算中...</div>
+        <div class="goal-gap" id="goal-gap">🎯 今日の目標まで: 計算中...</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">今週の平均勉強時間</div>
+          <div class="stat-val" id="stat-weekly-avg">0h 0m</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">今月の最高勉強時間</div>
+          <div class="stat-val" id="stat-monthly-max">0h 0m</div>
+        </div>
+        <div class="stat-card full">
+          <div class="stat-label">これまでの最長集中時間 (1セッション)</div>
+          <div class="stat-val" id="stat-longest-session">0h 0m</div>
+        </div>
+      </div>
+
+      <div class="todo-box">
+        <h3>☀️ 今日やること</h3>
+        <ul id="todo-list-today" class="todo-list"></ul>
+        <div class="todo-input-group">
+          <input type="text" id="input-today" placeholder="例: QB 消化器 50問">
+          <button onclick="addTodo('today')">追加</button>
+        </div>
+        <h3>🗓 近日中にやること</h3>
+        <ul id="todo-list-upcoming" class="todo-list"></ul>
+        <div class="todo-input-group">
+          <input type="text" id="input-upcoming" placeholder="例: 模試の復習">
+          <button onclick="addTodo('upcoming')">追加</button>
+        </div>
+      </div>
+
+      <div class="record-box">
+        <div class="record-title">今日の総勉強時間 (27時リセット)</div>
+        <div id="total-time">00:00:00</div>
+        <div class="time-adjust-btns">
+          <button class="btn-adjust" onclick="adjustTime(-10)">-10分</button>
+          <button class="btn-adjust" onclick="adjustTime(10)">+10分</button>
+          <button class="btn-adjust" onclick="adjustTime(30)">+30分</button>
+        </div>
+      </div>
+      
+      <div class="elapsed-info">最終記録から <span id="elapsed-time" style="color:#d68f84;">0分</span> 経過</div>
+      <div id="current-session">今回の集中: 00:00:00</div>
+      <button id="main-btn" class="btn-main" onclick="toggleTimer()">勉強スタート！</button>
+      <div id="message" style="margin-bottom: 20px;"></div>
+      
+      <h3 style="color: #d68f84; font-size: 1em; margin-top: 0; border-top: 2px solid #fff0eb; padding-top: 15px;">過去の記録 📅</h3>
+      <ul id="calendar-list" class="calendar-list"></ul>
+    </div>
+
+    <div id="quiz-tab" class="tab-content">
+      <div class="quiz-box">
+        <div class="quiz-title">
+          <span>AI プチCBT道場 🩺</span>
+          <button class="btn-generate" id="btn-generate-quiz" onclick="generateQuestion()">問題を生成</button>
+        </div>
+        <div id="loader-quiz" style="text-align:center; padding:10px; display:none; font-size:0.85em; color:#a4817a;">知識問題を作成中... 🧠✨</div>
+        <div id="quiz-error" style="display:none; color:#ff6b6b; font-size:0.85em; margin-top:10px;"></div>
+        
+        <div id="quiz-content" style="display: none;">
+          <div id="quiz-question" class="quiz-question"></div>
+          <div id="quiz-options" class="options-container"></div>
+          <div id="answer-area" class="answer-area">
+            <div class="exp-badge">解説</div>
+            <div id="quiz-explanation" class="exp-text"></div>
+            <button class="btn-copy" onclick="copyToClipboard()">📋 問題と解説をコピー (Anki用)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sns-tab" class="tab-content">
+      <div class="tweet-box">
+        <textarea id="tweet-input" placeholder="学んだ知識や焦りをつぶやこう！"></textarea>
+        <button class="btn-tweet" onclick="postTweet()">つぶやく</button>
+        <div id="loader-sns" style="display:none; color:#a4817a; font-size:0.85em; margin-top:5px;">先輩研修医がリプライを執筆中... ☕️</div>
+        
+        <div id="sns-error" style="display:none; color:#ff6b6b; font-size:0.85em; margin-top:10px; clear:both; font-weight:bold;"></div>
+        
+        <div style="clear:both;"></div>
+      </div>
+      <div id="timeline" class="timeline"></div>
+    </div>
+
+    <div id="hospital-tab" class="tab-content">
+      <div class="progress-box">
+        <div class="progress-title">あなたの総合病院 🏥</div>
+        <div class="status-desc" id="hospital-desc" style="font-weight:bold; color:#d68f84;">次の増築まで: 計算中...</div>
+      </div>
+      <div class="campus-outer">
+        <div class="campus-stage" id="campus-stage"></div>
+      </div>
+    </div>
+
+    <div id="travel-tab" class="tab-content">
+      <div class="progress-box" style="border-color: #8cb8d1; background-color: #f2f8fc;">
+        <div class="progress-title" style="color: #5a94b5;">フライトルート ✈️</div>
+        <div class="status-desc" id="travel-desc" style="font-weight:bold; color:#5a94b5;">次の都市まで: 計算中...</div>
+      </div>
+      <div class="map-outer">
+        <svg class="map-svg-bg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="oceanGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#e3f2fd"/>
+              <stop offset="100%" stop-color="#bfe3f7"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="800" height="400" fill="url(#oceanGrad)" />
+          <path d="M55,55 C120,35 225,45 265,90 C285,120 262,162 228,182 C185,205 138,192 108,160 C68,138 38,90 55,55 Z" fill="#bfe0c2" opacity="0.9"/>
+          <path d="M168,218 C212,206 244,238 232,292 C222,335 188,362 168,340 C146,308 146,250 168,218 Z" fill="#bfe0c2" opacity="0.9"/>
+          <path d="M368,66 C422,55 472,68 492,96 C503,116 480,132 449,127 C408,121 368,108 368,66 Z" fill="#bfe0c2" opacity="0.9"/>
+          <path d="M398,138 C440,128 472,150 472,202 C472,254 440,304 408,292 C388,270 378,200 398,138 Z" fill="#bfe0c2" opacity="0.9"/>
+          <path d="M498,56 C602,36 724,58 754,110 C776,152 732,182 680,171 C618,160 558,150 516,120 C496,100 486,78 498,56 Z" fill="#bfe0c2" opacity="0.9"/>
+          <path d="M598,178 C652,166 692,190 682,222 C670,254 628,242 608,222 C592,206 588,190 598,178 Z" fill="#bfe0c2" opacity="0.9"/>
+          <path d="M688,258 C730,246 772,270 762,302 C750,328 708,322 692,300 C682,285 682,270 688,258 Z" fill="#bfe0c2" opacity="0.9"/>
+          <g id="flight-path-group"></g>
+        </svg>
+        <div class="map-overlay" id="map-overlay"></div>
+      </div>
+      <div class="photo-album-title">📸 旅のフォトアルバム</div>
+      <div class="photo-album" id="photo-album"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const hospitalStages = [
+      { id: 1, icon: "🩺", name: "一般内科", reqMin: 40 },
+      { id: 2, icon: "🩹", name: "皮膚科", reqMin: 120 },
+      { id: 3, icon: "👀", name: "眼科", reqMin: 250 },
+      { id: 4, icon: "👂", name: "耳鼻咽喉科", reqMin: 420 },
+      { id: 5, icon: "👶", name: "小児科", reqMin: 650 },
+      { id: 6, icon: "🤰", name: "産婦人科", reqMin: 950 },
+      { id: 7, icon: "🦴", name: "整形外科", reqMin: 1300 },
+      { id: 8, icon: "🧠", name: "精神科", reqMin: 1700 },
+      { id: 9, icon: "🔪", name: "一般外科", reqMin: 2150 },
+      { id: 10, icon: "⚡", name: "脳神経外科", reqMin: 2650 },
+      { id: 11, icon: "🫀", name: "心臓血管外科", reqMin: 3250 },
+      { id: 12, icon: "🚑", name: "救急科(ER)", reqMin: 3950 },
+      { id: 13, icon: "☢️", name: "放射線科", reqMin: 4750 },
+      { id: 14, icon: "💤", name: "麻酔科", reqMin: 5650 },
+      { id: 15, icon: "🔬", name: "病理診断科", reqMin: 6650 },
+      { id: 16, icon: "❤️", name: "集中治療室", reqMin: 7900 },
+      { id: 17, icon: "🚁", name: "ドクターヘリ", reqMin: 9400 },
+      { id: 18, icon: "🏢", name: "特定機能病院", reqMin: 13000 }
+    ];
+
+    const travelStages = [
+      { id: 1, icon: "🗼", name: "東京 (日本)", reqMin: 80, mapX: 710, mapY: 121 },
+      { id: 2, icon: "🇰🇷", name: "ソウル (韓国)", reqMin: 220, mapX: 682, mapY: 116 },
+      { id: 3, icon: "🇹🇼", name: "台北 (台湾)", reqMin: 420, mapX: 670, mapY: 144 },
+      { id: 4, icon: "🇭🇰", name: "香港", reqMin: 700, mapX: 654, mapY: 150 },
+      { id: 5, icon: "🇹🇭", name: "バンコク (タイ)", reqMin: 1050, mapX: 623, mapY: 170 },
+      { id: 6, icon: "🇸🇬", name: "シンガポール", reqMin: 1450, mapX: 631, mapY: 197 },
+      { id: 7, icon: "🇦🇺", name: "シドニー (豪州)", reqMin: 1900, mapX: 736, mapY: 275 },
+      { id: 8, icon: "🌺", name: "ホノルル (ハワイ)", reqMin: 2400, mapX: 49, mapY: 153 },
+      { id: 9, icon: "🌲", name: "ポートランド (米国)", reqMin: 2950, mapX: 127, mapY: 101 },
+      { id: 10, icon: "🌉", name: "サンフランシスコ", reqMin: 3550, mapX: 128, mapY: 116 },
+      { id: 11, icon: "🗽", name: "ニューヨーク", reqMin: 4200, mapX: 236, mapY: 110 },
+      { id: 12, icon: "🍁", name: "トロント (カナダ)", reqMin: 4950, mapX: 224, mapY: 103 },
+      { id: 13, icon: "☕", name: "ロンドン (英国)", reqMin: 5800, mapX: 400, mapY: 86 },
+      { id: 14, icon: "🥐", name: "パリ (仏国)", reqMin: 6750, mapX: 405, mapY: 91 },
+      { id: 15, icon: "🍕", name: "ローマ (伊国)", reqMin: 7800, mapX: 428, mapY: 107 },
+      { id: 16, icon: "🕌", name: "イスタンブール", reqMin: 9000, mapX: 464, mapY: 109 },
+      { id: 17, icon: "🐪", name: "ドバイ (UAE)", reqMin: 10400, mapX: 523, mapY: 144 },
+      { id: 18, icon: "🌍", name: "世界一周達成！", reqMin: 16000, mapX: 705, mapY: 100 }
+    ];
+
+    let isRunning = false, sessionStartTime = 0, sessionTimerId = null;
+    let todayTotalMs = 0, lifetimeMs = 0, longestSessionMs = 0;
+    let currentCorrectAnswer = "", currentQuestionText = "", currentExplanationText = "";
+    let todos = { today: [], upcoming: [] };
+    let dailyGoalMin = 180; // 1日の目標勉強時間（分）デフォルト3時間
+    let lastAlertMin = 0; // 離席アラートを最後に鳴らした経過分数
+
+    function getLogicalDate(dateObj) {
+      const d = new Date(dateObj); d.setHours(d.getHours() - 3); return d;
+    }
+    function getDateKey(dateObj) {
+      const d = getLogicalDate(dateObj);
+      return "cbt_time_" + d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    }
+    
+    const nowObj = new Date();
+    const todayKey = getDateKey(nowObj);
+    const logicalToday = getLogicalDate(nowObj);
+    const currentY = logicalToday.getFullYear(), currentM = logicalToday.getMonth() + 1, currentD = logicalToday.getDate();
+
+    window.onload = () => {
+      const savedTime = localStorage.getItem(todayKey);
+      if (savedTime) todayTotalMs = parseInt(savedTime, 10);
+      const savedLifetime = localStorage.getItem('cbt_lifetime_ms');
+      if (savedLifetime) lifetimeMs = parseInt(savedLifetime, 10);
+      const savedLongest = localStorage.getItem('cbt_longest_session');
+      if (savedLongest) longestSessionMs = parseInt(savedLongest, 10);
+      const savedTodos = localStorage.getItem('cbt_todos');
+      if (savedTodos) todos = JSON.parse(savedTodos);
+      const savedGoal = localStorage.getItem('cbt_daily_goal_min');
+      if (savedGoal) dailyGoalMin = parseInt(savedGoal, 10);
+
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
+
+      updateDisplay(todayTotalMs, 'total-time');
+      updateDisplay(longestSessionMs, 'stat-longest-session');
+      
+      updateCountdown(); setInterval(updateCountdown, 60000);
+      updateElapsed(); setInterval(updateElapsed, 60000);
+      
+      renderTodos(); renderCalendarAndStats(); renderGimmicks(); renderTimeline();
+      renderStreak(); updateGoalGap(todayTotalMs);
+      document.getElementById('quiz-question').innerText = "「問題を生成」ボタンで知識問題を作成します。";
+      document.getElementById('quiz-content').style.display = 'block';
+    };
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+    function toggleSettings() {
+      const el = document.getElementById('settings-area'); el.style.display = el.style.display === 'block' ? 'none' : 'block';
+      document.getElementById('api-key-input').value = localStorage.getItem('cbt_gemini_api_key') || '';
+      document.getElementById('daily-goal-input').value = dailyGoalMin / 60;
+    }
+    function saveApiKey() {
+      const key = document.getElementById('api-key-input').value.trim();
+      if(key) { localStorage.setItem('cbt_gemini_api_key', key); alert('保存しました！'); document.getElementById('settings-area').style.display = 'none'; }
+    }
+    function saveDailyGoal() {
+      const hours = parseFloat(document.getElementById('daily-goal-input').value);
+      if (!hours || hours <= 0) return;
+      dailyGoalMin = Math.round(hours * 60);
+      localStorage.setItem('cbt_daily_goal_min', dailyGoalMin);
+      renderStreak(); updateGoalGap(todayTotalMs);
+      alert(`1日の目標を ${hours}時間 に設定しました！`);
+      document.getElementById('settings-area').style.display = 'none';
+    }
+
+    function exportData() {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('cbt_') || key.startsWith('penalty_'))) data[key] = localStorage.getItem(key);
+      }
+      const json = JSON.stringify(data);
+      const ta = document.getElementById('export-output');
+      ta.value = json; ta.style.display = 'block';
+      document.getElementById('copy-export-btn').style.display = 'inline-block';
+    }
+    function copyExportData() {
+      const ta = document.getElementById('export-output');
+      ta.select(); ta.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(ta.value).then(() => {
+        alert('コピーしました！新しいサイトの「引っ越し先でインポート」欄に貼り付けてください。');
+      }).catch(() => {
+        alert('自動コピーに失敗しました。テキストボックスの中身を手動で選択してコピーしてください。');
+      });
+    }
+    function importData() {
+      const raw = document.getElementById('import-input').value.trim();
+      if (!raw) { alert('貼り付けるテキストがありません。'); return; }
+      try {
+        const data = JSON.parse(raw);
+        Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+        alert('インポートが完了しました！ページを再読み込みします。');
+        location.reload();
+      } catch (e) {
+        alert('読み込みに失敗しました。コピーしたテキストが正しいか確認してください。');
+      }
+    }
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
+      const h = Math.floor(totalSeconds / 3600); const m = Math.floor((totalSeconds % 3600) / 60); const s = totalSeconds % 60;
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+    function formatShort(ms) {
+      const totalMin = Math.floor(Math.max(0, ms) / 60000); return `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
+    }
+    function updateDisplay(ms, elementId) { document.getElementById(elementId).innerText = formatTime(ms); }
+
+    function updateCountdown() {
+      const distance = new Date("2026-10-15T00:00:00").getTime() - Date.now();
+      const el = document.getElementById("countdown-display");
+      if (distance < 0) { el.innerText = "ついに本番です！健闘を祈ります！"; return; }
+      el.innerText = `あと ${Math.floor(distance / 86400000)}日 ${Math.floor((distance % 86400000) / 3600000)}時間 ${Math.floor((distance % 3600000) / 60000)}分`;
+    }
+    function updateElapsed() {
+      const lastTime = localStorage.getItem('cbt_last_record_time');
+      const el = document.getElementById('elapsed-time');
+      if (isRunning) { el.innerText = "計測中..."; el.style.color = "#a4d3c2"; lastAlertMin = 0; return; }
+      if (!lastTime) { el.innerText = "記録なし"; return; }
+      const diffMin = Math.floor((Date.now() - parseInt(lastTime, 10)) / 60000);
+      if (diffMin >= 20) { el.innerText = `${diffMin}分 経過！すぐ再開を！`; el.style.color = "#ff6b6b"; } 
+      else { el.innerText = `${diffMin}分`; el.style.color = "#d68f84"; }
+
+      const ALERT_INTERVAL = 20; // 20分おきに離席アラートを再送
+      if (diffMin >= ALERT_INTERVAL && diffMin - lastAlertMin >= ALERT_INTERVAL) {
+        lastAlertMin = diffMin;
+        fireAwayAlert(diffMin);
+      }
+    }
+
+    function fireAwayAlert(diffMin) {
+      playBeep();
+      if (navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch(e) {} }
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try { new Notification('CBT Voyage ⏰', { body: `離席してから${diffMin}分経過。そろそろ再開しよう！` }); } catch(e) {}
+      }
+      const msg = document.getElementById('message');
+      if (msg) { msg.innerText = `⏰ 離席して${diffMin}分…そろそろ戻ろう！`; msg.style.color = "#ff6b6b"; }
+    }
+
+    function playBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = 880;
+        osc.connect(gain); gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+      } catch (e) {}
+    }
+
+    function computeStreak(goalMin) {
+      const goalMs = goalMin * 60000;
+      const dateKeyFor = (d) => "cbt_time_" + d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+      const todayMs = parseInt(localStorage.getItem(dateKeyFor(logicalToday)) || '0', 10);
+      const includeToday = todayMs >= goalMs;
+      let streak = includeToday ? 1 : 0;
+      for (let i = 1; i < 400; i++) {
+        const d = new Date(logicalToday); d.setDate(d.getDate() - i);
+        const ms = parseInt(localStorage.getItem(dateKeyFor(d)) || '0', 10);
+        if (ms >= goalMs) streak++; else break;
+      }
+      return { streak, includeToday };
+    }
+
+    function renderStreak() {
+      const el = document.getElementById('streak-display'); if (!el) return;
+      const { streak, includeToday } = computeStreak(dailyGoalMin);
+      if (streak === 0) {
+        el.innerText = `🔥 連続達成記録: まだ0日（今日から始めよう！）`;
+      } else if (includeToday) {
+        el.innerText = `🔥 連続達成記録: ${streak}日目！（今日も達成 🎉）`;
+      } else {
+        el.innerText = `🔥 連続達成記録: ${streak}日（今日はまだ達成前・継続のチャンス！）`;
+      }
+    }
+
+    function updateGoalGap(currentMs) {
+      const el = document.getElementById('goal-gap'); if (!el) return;
+      const remain = dailyGoalMin * 60000 - currentMs;
+      if (remain <= 0) {
+        el.innerText = `🎯 今日の目標達成！(+${formatShort(-remain)})`;
+        el.style.color = '#4caf50';
+      } else {
+        el.innerText = `🎯 今日の目標まであと ${formatShort(remain)}`;
+        el.style.color = '#d68f84';
+      }
+    }
+
+    function renderTodos() {
+      const ulToday = document.getElementById('todo-list-today'); ulToday.innerHTML = '';
+      todos.today.forEach((todo, index) => {
+        ulToday.innerHTML += `<li class="${todo.done ? 'completed' : ''}"><input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo('today', ${index})"><span class="todo-text">${todo.text}</span><button class="btn-del" onclick="deleteTodo('today', ${index})">×</button></li>`;
+      });
+      const ulUpcoming = document.getElementById('todo-list-upcoming'); ulUpcoming.innerHTML = '';
+      todos.upcoming.forEach((todo, index) => {
+        ulUpcoming.innerHTML += `<li class="${todo.done ? 'completed' : ''}"><input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo('upcoming', ${index})"><span class="todo-text">${todo.text}</span><button class="btn-move" onclick="moveTodoToToday(${index})">↑ 今日へ</button><button class="btn-del" onclick="deleteTodo('upcoming', ${index})">×</button></li>`;
+      });
+      localStorage.setItem('cbt_todos', JSON.stringify(todos));
+    }
+    function addTodo(type) {
+      const input = document.getElementById(`input-${type}`); const text = input.value.trim();
+      if (!text) return; todos[type].push({ text: text, done: false }); input.value = ''; renderTodos();
+    }
+    function toggleTodo(type, index) { todos[type][index].done = !todos[type][index].done; renderTodos(); }
+    function deleteTodo(type, index) { todos[type].splice(index, 1); renderTodos(); }
+    function moveTodoToToday(index) { todos.today.push(todos.upcoming.splice(index, 1)[0]); renderTodos(); }
+
+    function adjustTime(minutes) {
+      if (isRunning) { alert("計測中は修正できません"); return; }
+      const ms = minutes * 60000;
+      if (todayTotalMs + ms < 0) return;
+      todayTotalMs += ms; lifetimeMs += ms;
+      localStorage.setItem(todayKey, todayTotalMs); localStorage.setItem('cbt_lifetime_ms', lifetimeMs);
+      updateDisplay(todayTotalMs, 'total-time'); renderCalendarAndStats(); renderGimmicks();
+      renderStreak(); updateGoalGap(todayTotalMs);
+      const msg = document.getElementById('message');
+      msg.innerText = minutes > 0 ? `${minutes}分 追加しました！` : `${Math.abs(minutes)}分 減らしました。`; msg.style.color = "#a4d3c2";
+    }
+
+    function toggleTimer() {
+      const btn = document.getElementById('main-btn'); const msg = document.getElementById('message');
+      if (!isRunning) {
+        isRunning = true; sessionStartTime = Date.now(); lastAlertMin = 0;
+        btn.innerText = "勉強おわり（5分未満はサボり記録）"; btn.classList.add('running');
+        msg.innerText = "集中タイム！スマホを伏せてペンを持とう。"; msg.style.color = "#d68f84";
+        updateElapsed();
+        sessionTimerId = setInterval(() => {
+          const currentSessionMs = Date.now() - sessionStartTime;
+          updateDisplay(currentSessionMs, 'current-session'); updateDisplay(todayTotalMs + currentSessionMs, 'total-time');
+          updateGoalGap(todayTotalMs + currentSessionMs);
+        }, 1000);
+      } else {
+        isRunning = false; clearInterval(sessionTimerId);
+        const currentSessionMs = Date.now() - sessionStartTime;
+        todayTotalMs += currentSessionMs; lifetimeMs += currentSessionMs;
+        if (currentSessionMs > longestSessionMs) {
+            longestSessionMs = currentSessionMs; localStorage.setItem('cbt_longest_session', longestSessionMs);
+            document.getElementById('stat-longest-session').innerText = formatShort(longestSessionMs);
+        }
+        localStorage.setItem(todayKey, todayTotalMs); localStorage.setItem('cbt_lifetime_ms', lifetimeMs); localStorage.setItem('cbt_last_record_time', Date.now());
+        btn.innerText = "勉強を再開する！"; btn.classList.remove('running');
+        updateDisplay(0, 'current-session'); updateDisplay(todayTotalMs, 'total-time'); updateElapsed();
+        
+        if (currentSessionMs < 300000) {
+          const m = Math.floor(currentSessionMs / 60000); const s = Math.floor((currentSessionMs % 60000) / 1000);
+          localStorage.setItem("penalty_" + Date.now(), `${m}分${s}秒でサボり`);
+          msg.innerText = "カレンダーに『サボり記録』が刻まれました…。"; msg.style.color = "#ff6b6b";
+        } else {
+          msg.innerText = "よくがんばったねえらい！"; msg.style.color = "#a4d3c2";
+        }
+        renderCalendarAndStats(); renderGimmicks();
+        renderStreak(); updateGoalGap(todayTotalMs);
+      }
+    }
+
+    function renderCalendarAndStats() {
+      const listElement = document.getElementById('calendar-list'); listElement.innerHTML = ''; const items = [];
+      let monthMaxMs = 0; let weekTotalMs = 0; let daysWithData = 0;
+      const past7DaysKeys = [];
+      for(let i=0; i<7; i++) {
+        let d = new Date(logicalToday); d.setDate(d.getDate() - i);
+        past7DaysKeys.push("cbt_time_" + d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0'));
+      }
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i); if (!key) continue;
+        if (key.startsWith("cbt_time_")) {
+          const ms = parseInt(localStorage.getItem(key), 10); const dateStr = key.replace("cbt_time_", ""); 
+          let y, m, d;
+          if (dateStr.includes('-')) {
+            const parts = dateStr.split('-'); y = parseInt(parts[0], 10); m = parseInt(parts[1], 10); d = parseInt(parts[2], 10);
+          } else {
+            y = parseInt(dateStr.substring(0,4), 10); m = parseInt(dateStr.substring(4,6), 10); d = parseInt(dateStr.substring(6,8), 10);
+          }
+          if (y === currentY && m === currentM && ms > monthMaxMs) { monthMaxMs = ms; }
+          if (past7DaysKeys.includes(key)) { weekTotalMs += ms; daysWithData++; }
+          const isToday = (y === currentY && m === currentM && d === currentD);
+          items.push({ timestamp: new Date(y, m-1, d).getTime(), html: `<span>${isToday ? "今日" : `${m}/${d}`} の総勉強</span><span class="time">${Math.floor(ms / 3600000)}時間 ${Math.floor((ms % 3600000) / 60000)}分</span>` });
+        } else if (key.startsWith("penalty_")) {
+          const timestamp = parseInt(key.replace("penalty_", ""), 10); const pDate = getLogicalDate(timestamp);
+          const isToday = (pDate.getFullYear() === currentY && (pDate.getMonth()+1) === currentM && pDate.getDate() === currentD);
+          items.push({ timestamp: timestamp, html: `<span>⚠️ ${isToday ? "今日" : `${pDate.getMonth()+1}/${pDate.getDate()}`} ${String(new Date(timestamp).getHours()).padStart(2,'0')}:${String(new Date(timestamp).getMinutes()).padStart(2,'0')} </span><span class="penalty">${localStorage.getItem(key)}</span>` });
+        }
+      }
+      
+      document.getElementById('stat-monthly-max').innerText = formatShort(monthMaxMs);
+      const weekAvgMs = daysWithData > 0 ? Math.floor(weekTotalMs / 7) : 0; 
+      document.getElementById('stat-weekly-avg').innerText = formatShort(weekAvgMs) + "/日";
+      items.sort((a, b) => b.timestamp - a.timestamp);
+      if (items.length === 0) { listElement.innerHTML = '<li>まだ記録がないよ。今日からスタート！</li>'; return; }
+      items.forEach(item => { const li = document.createElement('li'); li.innerHTML = item.html; listElement.appendChild(li); });
+    }
+
+    function renderGimmicks() {
+      const totalMin = Math.floor(lifetimeMs / 60000);
+      renderHospital(totalMin);
+      renderTravel(totalMin);
+    }
+
+    function roofPalette(i) {
+      const colors = ["#ef9a9a","#f8bbd0","#ce93d8","#b39ddb","#9fa8da","#90caf9","#81d4fa","#80deea","#80cbc4","#a5d6a7","#c5e1a5","#e6ee9c","#fff59d","#ffe082","#ffcc80","#ffab91","#bcaaa4","#eeeeee"];
+      return colors[i % colors.length];
+    }
+    function photoGradient(i) {
+      const grads = [
+        "linear-gradient(135deg,#ff9a8b,#ff6a88)", "linear-gradient(135deg,#a18cd1,#fbc2eb)",
+        "linear-gradient(135deg,#84fab0,#8fd3f4)", "linear-gradient(135deg,#f6d365,#fda085)",
+        "linear-gradient(135deg,#5ee7df,#b490ca)", "linear-gradient(135deg,#96e6a1,#d4fc79)",
+        "linear-gradient(135deg,#fbc2eb,#a6c1ee)", "linear-gradient(135deg,#fccb90,#d57eeb)",
+        "linear-gradient(135deg,#e0c3fc,#8ec5fc)", "linear-gradient(135deg,#f9d423,#ff4e50)"
+      ];
+      return grads[i % grads.length];
+    }
+
+    let prevBuiltCount = -1; // -1 = 初回ロード（アニメーションなし）
+    function renderHospital(totalMin) {
+      const stageEl = document.getElementById('campus-stage'); stageEl.innerHTML = '';
+      let builtCount = 0;
+      hospitalStages.forEach((s, i) => { if (totalMin >= s.reqMin) builtCount = i + 1; });
+      hospitalStages.forEach((s, i) => {
+        const isBuilt = i < builtCount;
+        const justBuilt = isBuilt && prevBuiltCount !== -1 && i >= prevBuiltCount;
+        const plot = document.createElement('div');
+        plot.className = 'building-plot' + (justBuilt ? ' pop-in' : '');
+        plot.innerHTML = isBuilt
+          ? `<div class="building3d"><div class="b-roof" style="border-bottom-color:${roofPalette(i)}"></div><div class="b-body"><span>${s.icon}</span></div><div class="b-shadow"></div></div><div class="building-name">${s.name}</div>`
+          : `<div class="empty-lot">🚧</div><div class="building-name faded">${s.name}</div>`;
+        stageEl.appendChild(plot);
+      });
+      prevBuiltCount = builtCount;
+      const nextHosp = hospitalStages[builtCount];
+      document.getElementById('hospital-desc').innerText = nextHosp ? `次の増設 (${nextHosp.name}) まであと ${nextHosp.reqMin - totalMin}分` : "病院は完全に発展しました！";
+    }
+
+    let prevTravelIndex = -1000; // -1000 = 初回ロード（アニメーションなし）
+    function renderTravel(totalMin) {
+      let currentIndex = -1;
+      travelStages.forEach((s, i) => { if (totalMin >= s.reqMin) currentIndex = i; });
+
+      const overlay = document.getElementById('map-overlay'); overlay.innerHTML = '';
+      travelStages.forEach((s, i) => {
+        const visited = i <= currentIndex;
+        const dot = document.createElement('div');
+        dot.className = 'city-dot' + (visited ? ' visited' : '') + (i === currentIndex ? ' current' : '');
+        dot.style.left = (s.mapX / 800 * 100) + '%'; dot.style.top = (s.mapY / 400 * 100) + '%';
+        dot.innerText = visited ? s.icon : '·';
+        overlay.appendChild(dot);
+        if (visited) {
+          const label = document.createElement('div');
+          label.className = 'city-label';
+          label.style.left = (s.mapX / 800 * 100) + '%'; label.style.top = (s.mapY / 400 * 100) + '%';
+          label.innerText = s.name.replace(/\s*\(.*\)/, '');
+          overlay.appendChild(label);
+        }
+      });
+
+      let px, py;
+      if (currentIndex < 0) { px = travelStages[0].mapX; py = travelStages[0].mapY; }
+      else if (currentIndex >= travelStages.length - 1) { px = travelStages[travelStages.length - 1].mapX; py = travelStages[travelStages.length - 1].mapY; }
+      else {
+        const cur = travelStages[currentIndex], next = travelStages[currentIndex + 1];
+        const frac = Math.min(1, Math.max(0, (totalMin - cur.reqMin) / (next.reqMin - cur.reqMin)));
+        px = cur.mapX + (next.mapX - cur.mapX) * frac; py = cur.mapY + (next.mapY - cur.mapY) * frac;
+      }
+      const plane = document.createElement('div');
+      plane.className = 'plane-marker'; plane.innerText = '✈️';
+      plane.style.left = (px / 800 * 100) + '%'; plane.style.top = (py / 400 * 100) + '%';
+      overlay.appendChild(plane);
+
+      const pathGroup = document.getElementById('flight-path-group'); pathGroup.innerHTML = '';
+      if (currentIndex > 0) {
+        let d = `M${travelStages[0].mapX},${travelStages[0].mapY} `;
+        for (let i = 1; i <= currentIndex; i++) d += `L${travelStages[i].mapX},${travelStages[i].mapY} `;
+        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathEl.setAttribute("d", d); pathEl.setAttribute("class", "flight-path");
+        pathGroup.appendChild(pathEl);
+      }
+
+      const album = document.getElementById('photo-album'); album.innerHTML = '';
+      if (currentIndex < 0) {
+        album.innerHTML = '<div class="photo-empty">まだ旅は始まっていません。勉強してマイルを貯めよう！</div>';
+      } else {
+        for (let i = 0; i <= currentIndex; i++) {
+          const s = travelStages[i];
+          const isNew = prevTravelIndex !== -1000 && i > prevTravelIndex;
+          const card = document.createElement('div');
+          card.className = 'photo-card' + (isNew ? ' pop-in' : '');
+          card.style.background = photoGradient(i);
+          card.innerHTML = `<div class="photo-icon">${s.icon}</div><div class="photo-caption">${s.name}</div>`;
+          album.appendChild(card);
+        }
+      }
+      prevTravelIndex = currentIndex;
+
+      const nextTravel = travelStages[currentIndex + 1];
+      document.getElementById('travel-desc').innerText = nextTravel ? `次の都市 (${nextTravel.name}) まであと ${nextTravel.reqMin - totalMin}マイル` : "🌍 世界一周達成おめでとう！";
+    }
+
+    async function fetchAI(promptText, apiKey) {
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      if (!listRes.ok) throw new Error("APIキーが無効か通信エラー");
+      const listData = await listRes.json();
+      const validModels = listData.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"));
+      if (validModels.length === 0) throw new Error("利用可能なモデルがありません");
+      let targetModel = validModels.find(m => m.name.includes("flash")) || validModels.find(m => m.name.includes("pro")) || validModels[0];
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${targetModel.name}:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+      });
+      if (!response.ok) { const errData = await response.json(); throw new Error(errData.error?.message || "通信エラー"); }
+      const data = await response.json(); const text = data.candidates[0].content.parts[0].text;
+      const jsonMatch = text.match(/\{[\s\S]*\}/); if (jsonMatch) return JSON.parse(jsonMatch[0]); throw new Error("AIの回答処理エラー");
+    }
+
+    async function generateQuestion() {
+      const apiKey = localStorage.getItem('cbt_gemini_api_key'); if (!apiKey) { alert("⚙️からAPIキーを設定してください！"); return; }
+      document.getElementById('btn-generate-quiz').disabled = true; document.getElementById('quiz-content').style.display = 'none';
+      document.getElementById('answer-area').style.display = 'none'; document.getElementById('quiz-error').style.display = 'none'; document.getElementById('loader-quiz').style.display = 'block';
+      const promptText = `あなたは医学部生向けCBT対策のチューターです。医学部CBT本番形式（5肢択一）の「知識問題（基礎医学、公衆衛生、各疾患の特異的な症状・検査・治療などの1問1答形式）」をランダムに1問作成してください。複雑な長文の症例問題は避け、確実な知識を問う形式にしてください。必ず以下のJSONのみ出力。{"question": "問題文", "options": ["A", "B", "C", "D", "E"], "answer": "正解の選択肢文字列と完全一致", "explanation": "解説"}`;
+      try {
+        const result = await fetchAI(promptText, apiKey);
+        currentQuestionText = result.question; currentCorrectAnswer = result.answer; currentExplanationText = result.explanation;
+        document.getElementById('quiz-question').innerText = currentQuestionText; document.getElementById('quiz-explanation').innerText = currentExplanationText;
+        const optionsContainer = document.getElementById('quiz-options'); optionsContainer.innerHTML = ''; const prefix = ['a.', 'b.', 'c.', 'd.', 'e.'];
+        result.options.forEach((opt, index) => {
+          const btn = document.createElement('button'); btn.className = 'option-btn';
+          btn.innerText = opt.match(/^[a-eA-E][\.\)]/) ? opt : `${prefix[index]} ${opt}`;
+          btn.onclick = () => checkAnswer(btn, opt); optionsContainer.appendChild(btn);
+        });
+        document.getElementById('loader-quiz').style.display = 'none'; document.getElementById('quiz-content').style.display = 'block';
+      } catch (error) {
+        document.getElementById('loader-quiz').style.display = 'none'; const errBox = document.getElementById('quiz-error'); errBox.style.display = 'block'; errBox.innerText = `【通信エラー】\n${error.message}`;
+      } finally { document.getElementById('btn-generate-quiz').disabled = false; }
+    }
+
+    function checkAnswer(clickedBtn, selectedOptionText) {
+      const allBtns = document.querySelectorAll('.option-btn'); allBtns.forEach(btn => btn.disabled = true);
+      if (selectedOptionText === currentCorrectAnswer) { clickedBtn.classList.add('correct'); } 
+      else {
+        clickedBtn.classList.add('wrong');
+        allBtns.forEach(btn => { if (btn.innerText.includes(currentCorrectAnswer) || currentCorrectAnswer.includes(btn.innerText.replace(/^[a-eA-E][\.\)]\s*/, ''))) btn.classList.add('correct'); });
+      }
+      document.getElementById('answer-area').style.display = 'block';
+    }
+
+    function copyToClipboard() { navigator.clipboard.writeText(`Q: ${currentQuestionText}\n\nA: ${currentCorrectAnswer}\n\n[解説]\n${currentExplanationText}`).then(() => alert("コピーしました！Ankiに貼り付けてください。")); }
+
+    async function postTweet() {
+      const input = document.getElementById('tweet-input'); const text = input.value.trim(); if (!text) return;
+      const apiKey = localStorage.getItem('cbt_gemini_api_key'); if (!apiKey) { alert("⚙️からAPIキーを設定してください！"); return; }
+      document.getElementById('sns-error').style.display = 'none'; document.getElementById('loader-sns').style.display = "block";
+      const tweetId = Date.now(); saveTweet({ id: tweetId, type: 'user', text: text, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+      input.value = ''; renderTimeline();
+      const promptText = `あなたは医学部の先輩研修医です。医学部生がこうつぶやきました：『 ${text} 』。1. 褒める/励ます。 2. 関連するCBT知識を1つアドバイス。 3. 以下のJSONのみで出力。{ "reply": "リプライ文章" }`;
+      try {
+        const result = await fetchAI(promptText, apiKey);
+        saveTweet({ id: Date.now(), type: 'ai', parentId: tweetId, text: result.reply, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+      } catch (error) {
+        document.getElementById('sns-error').style.display = 'block'; document.getElementById('sns-error').innerText = `【失敗】\n${error.message}`;
+        saveTweet({ id: Date.now(), type: 'ai', parentId: tweetId, text: "（通信エラーでリプが届かなかったみたい…ごめんね！）", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+      } finally { document.getElementById('loader-sns').style.display = "none"; renderTimeline(); }
+    }
+
+    function saveTweet(item) { const tweets = JSON.parse(localStorage.getItem('cbt_tweets') || '[]'); tweets.push(item); localStorage.setItem('cbt_tweets', JSON.stringify(tweets)); }
+    function renderTimeline() {
+      const tl = document.getElementById('timeline'); tl.innerHTML = ''; const tweets = JSON.parse(localStorage.getItem('cbt_tweets') || '[]');
+      const userTweets = tweets.filter(t => t.type === 'user').reverse(); if (userTweets.length === 0) return;
+      userTweets.forEach(ut => {
+        const itemDiv = document.createElement('div'); itemDiv.className = 'tweet-item';
+        let html = `<div class="tweet-user">あなた <span style="font-size:0.8em; color:#a4817a; font-weight:normal;">${ut.time}</span></div><div class="tweet-text">${ut.text}</div>`;
+        const reply = tweets.find(t => t.type === 'ai' && t.parentId === ut.id);
+        if (reply) html += `<div class="reply-item"><div class="reply-user">☕️ 先輩研修医 <span style="font-size:0.8em; color:#a4817a; font-weight:normal;">${reply.time}</span></div><div class="tweet-text">${reply.text}</div></div>`;
+        itemDiv.innerHTML = html; tl.appendChild(itemDiv);
+      });
+    }
+  </script>
+</body>
+</html>
