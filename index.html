@@ -40,6 +40,57 @@
 
   /* 統計・記録 */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+
+  /* --- フォーカスフライト（飛行機の窓） --- */
+  .plane-window-outer { display: flex; flex-direction: column; align-items: center; margin: 4px 0 20px; }
+  .plane-frame {
+    position: relative;
+    width: 168px; height: 208px;
+    background: radial-gradient(ellipse at 50% 42%, #3d3d40 0%, #222224 55%, #0c0c0d 100%);
+    border-radius: 48% 48% 42% 42% / 40% 40% 28% 28%;
+    padding: 14px;
+    box-sizing: border-box;
+    box-shadow: 0 14px 26px rgba(0,0,0,0.4);
+  }
+  .shade-box {
+    position: absolute; top: 7px; left: 50%; width: 58px; height: 15px; margin-left: -29px;
+    background: linear-gradient(180deg, #4d4d50, #1b1b1d);
+    border-radius: 8px 8px 3px 3px;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.5);
+  }
+  .plane-bezel {
+    position: relative; width: 100%; height: 100%;
+    background: linear-gradient(155deg, #ece9e3, #bdb9b0 45%, #8d8a83 100%);
+    border-radius: 46% 46% 40% 40% / 38% 38% 26% 26%;
+    padding: 8px;
+    box-sizing: border-box;
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.65), inset 0 -3px 6px rgba(0,0,0,0.35);
+  }
+  .plane-glass {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    border-radius: 43% 43% 37% 37% / 35% 35% 24% 24%;
+    filter: saturate(0.5) brightness(0.65);
+    transition: filter 1s ease;
+    box-shadow: inset 0 0 16px rgba(0,0,0,0.55);
+  }
+  .plane-window-outer.flying .plane-glass { filter: saturate(1.05) brightness(1); }
+  .sky-photo {
+    position: absolute; inset: 0;
+    background-image: url("data:image/webp;base64,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");
+    background-repeat: repeat-x;
+    background-size: 150px 100%;
+    background-position: 0 0;
+    animation: driftSky 46s linear infinite;
+  }
+  .plane-window-outer:not(.flying) .sky-photo { animation-play-state: paused; }
+  @keyframes driftSky { from { background-position-x: 0; } to { background-position-x: -1800px; } }
+  .window-shine {
+    position: absolute; top: 5%; left: 12%; width: 24%; height: 60%;
+    background: linear-gradient(120deg, rgba(255,255,255,0.3), rgba(255,255,255,0) 65%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .plane-caption { margin-top: 8px; font-size: 0.78em; font-weight: bold; color: #a68c86; text-align: center; }
+  .plane-window-outer.flying .plane-caption { color: #d68f84; }
   .motivation-box { display: flex; flex-direction: column; gap: 6px; background-color: #fff7f2; border: 2px dashed #ffb6a3; padding: 10px 14px; border-radius: 14px; margin-bottom: 15px; text-align: center; }
   .streak-display { font-weight: bold; color: #e2725b; font-size: 0.95em; }
   .goal-gap { font-weight: bold; font-size: 0.95em; color: #d68f84; }
@@ -65,36 +116,18 @@
   .progress-box { background-color: #f7fbf9; border: 2px solid #a4d3c2; padding: 12px; border-radius: 15px; margin-bottom: 15px; text-align: center; }
   .progress-title { font-weight: bold; color: #6db398; font-size: 1.1em; margin-bottom: 5px; }
 
-  /* --- 病院キャンパス（ぽこぽこ建つ町） --- */
-  .campus-outer { perspective: 900px; margin-bottom: 4px; }
-  .campus-stage {
-    transform: rotateX(8deg);
-    transform-origin: bottom center;
-    background:
-      repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0 8px, rgba(0,0,0,0.03) 8px 16px),
-      linear-gradient(180deg, #cdeccf 0%, #a8dba8 100%);
-    border: 4px solid #6fae6f;
+  /* --- 病院キャンパス（アイソメトリックな街） --- */
+  .campus-outer {
     border-radius: 16px;
-    padding: 12px 6px 8px;
+    overflow: hidden;
+    border: 4px solid #6fae6f;
     box-shadow: 0 20px 25px -12px rgba(70,130,70,0.4);
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 8px 3px;
-    aspect-ratio: 4 / 3;
-    width: 100%;
-    box-sizing: border-box;
+    background: linear-gradient(180deg, #dff3e3 0%, #b9e3bf 100%);
   }
-  .building-plot { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; min-width: 0; }
-  .building-plot.pop-in .building3d { animation: buildingPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .building3d { position: relative; width: 42px; height: 42px; margin-bottom: 3px; flex-shrink: 0; }
-  .b-roof { position: absolute; top: -2px; left: 2px; width: 0; height: 0; border-left: 19px solid transparent; border-right: 19px solid transparent; border-bottom: 12px solid #ef9a9a; filter: drop-shadow(1px 2px 0 rgba(0,0,0,0.08)); }
-  .b-body { position: absolute; top: 9px; left: 3px; width: 36px; height: 27px; background: linear-gradient(180deg,#ffffff,#f1f1f1); border: 2px solid #ddd; border-radius: 0 0 6px 6px; box-shadow: 2px 3px 0 rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; font-size: 1.1em; }
-  .b-shadow { position: absolute; bottom: -5px; left: 4px; width: 34px; height: 7px; background: rgba(0,0,0,0.18); border-radius: 50%; filter: blur(2px); }
-  .empty-lot { width: 38px; height: 32px; margin-bottom: 3px; background: repeating-linear-gradient(135deg, #9fd39f 0 6px, #8fca8f 6px 12px); border: 2px dashed #6fae6f; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.05em; opacity: 0.75; flex-shrink: 0; }
-  .building-name { font-size: 0.52em; font-weight: bold; color: #2e7d32; text-align: center; line-height: 1.2; word-break: keep-all; }
-  .building-name.faded { color: #6fae6f; opacity: 0.8; }
+  .campus-svg { display: block; width: 100%; height: auto; }
+  .iso-building.pop-in { transform-box: fill-box; transform-origin: 50% 100%; animation: buildingPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes buildingPop { 0% { transform: scale(0) translateY(24px); opacity: 0; } 65% { transform: scale(1.18) translateY(-6px); opacity: 1; } 100% { transform: scale(1) translateY(0); } }
+
 
   /* --- 世界地図フライトマップ --- */
   .map-outer { position: relative; border-radius: 16px; overflow: hidden; border: 4px solid #7fb8e8; box-shadow: 0 20px 25px -12px rgba(60,110,170,0.35); }
@@ -150,6 +183,9 @@
   .settings-area textarea { width: calc(100% - 20px); padding: 8px; margin-top: 6px; border: 1px solid #d68f84; border-radius: 5px; font-size: 0.75em; font-family: monospace; resize: vertical; }
   .settings-area button { margin-top: 10px; background-color: #d68f84; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold;}
   .settings-area .migrate-block { margin-top: 16px; padding-top: 12px; border-top: 1px dashed #d68f84; }
+  .goal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 6px; }
+  .goal-grid > div { display: flex; flex-direction: column; align-items: center; font-size: 0.75em; color: #d68f84; font-weight: bold; }
+  .goal-grid input { width: 100%; padding: 4px 2px; margin-top: 2px; text-align: center; border: 1px solid #d68f84; border-radius: 5px; }
   
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
@@ -170,8 +206,16 @@
       <label>Gemini APIキーを入力:</label>
       <input type="password" id="api-key-input">
       <button onclick="saveApiKey()">保存</button>
-      <label style="display:block; margin-top:12px;">1日の目標勉強時間（時間）:</label>
-      <input type="number" id="daily-goal-input" step="0.5" min="0.5">
+      <label style="display:block; margin-top:12px;">曜日ごとの目標勉強時間（時間）:</label>
+      <div class="goal-grid">
+        <div><span>月</span><input type="number" id="goal-mon" step="0.5" min="0"></div>
+        <div><span>火</span><input type="number" id="goal-tue" step="0.5" min="0"></div>
+        <div><span>水</span><input type="number" id="goal-wed" step="0.5" min="0"></div>
+        <div><span>木</span><input type="number" id="goal-thu" step="0.5" min="0"></div>
+        <div><span>金</span><input type="number" id="goal-fri" step="0.5" min="0"></div>
+        <div><span>土</span><input type="number" id="goal-sat" step="0.5" min="0"></div>
+        <div><span>日</span><input type="number" id="goal-sun" step="0.5" min="0"></div>
+      </div>
       <button onclick="saveDailyGoal()">保存</button>
 
       <div class="migrate-block">
@@ -196,6 +240,21 @@
     </div>
 
     <div id="timer-tab" class="tab-content active">
+      <div class="record-box">
+        <div class="record-title">今日の総勉強時間 (27時リセット)</div>
+        <div id="total-time">00:00:00</div>
+        <div class="time-adjust-btns">
+          <button class="btn-adjust" onclick="adjustTime(-10)">-10分</button>
+          <button class="btn-adjust" onclick="adjustTime(10)">+10分</button>
+          <button class="btn-adjust" onclick="adjustTime(30)">+30分</button>
+        </div>
+      </div>
+
+      <div class="elapsed-info">最終記録から <span id="elapsed-time" style="color:#d68f84;">0分</span> 経過</div>
+      <div id="current-session">今回の集中: 00:00:00</div>
+      <button id="main-btn" class="btn-main" onclick="toggleTimer()">勉強スタート！</button>
+      <div id="message" style="margin-bottom: 20px;"></div>
+
       <div class="motivation-box">
         <div class="streak-display" id="streak-display">🔥 連続達成記録: 計算中...</div>
         <div class="goal-gap" id="goal-gap">🎯 今日の目標まで: 計算中...</div>
@@ -231,20 +290,18 @@
         </div>
       </div>
 
-      <div class="record-box">
-        <div class="record-title">今日の総勉強時間 (27時リセット)</div>
-        <div id="total-time">00:00:00</div>
-        <div class="time-adjust-btns">
-          <button class="btn-adjust" onclick="adjustTime(-10)">-10分</button>
-          <button class="btn-adjust" onclick="adjustTime(10)">+10分</button>
-          <button class="btn-adjust" onclick="adjustTime(30)">+30分</button>
+      <div class="plane-window-outer" id="plane-window">
+        <div class="plane-frame">
+          <div class="shade-box"></div>
+          <div class="plane-bezel">
+            <div class="plane-glass">
+              <div class="sky-photo"></div>
+              <div class="window-shine"></div>
+            </div>
+          </div>
         </div>
+        <div class="plane-caption" id="plane-caption">✈️ 出発前（勉強スタートでフライト開始）</div>
       </div>
-      
-      <div class="elapsed-info">最終記録から <span id="elapsed-time" style="color:#d68f84;">0分</span> 経過</div>
-      <div id="current-session">今回の集中: 00:00:00</div>
-      <button id="main-btn" class="btn-main" onclick="toggleTimer()">勉強スタート！</button>
-      <div id="message" style="margin-bottom: 20px;"></div>
       
       <h3 style="color: #d68f84; font-size: 1em; margin-top: 0; border-top: 2px solid #fff0eb; padding-top: 15px;">過去の記録 📅</h3>
       <ul id="calendar-list" class="calendar-list"></ul>
@@ -290,7 +347,7 @@
         <div class="status-desc" id="hospital-desc" style="font-weight:bold; color:#d68f84;">次の増築まで: 計算中...</div>
       </div>
       <div class="campus-outer">
-        <div class="campus-stage" id="campus-stage"></div>
+        <svg class="campus-svg" id="campus-svg" viewBox="0 0 432 250" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
     </div>
 
@@ -372,7 +429,7 @@
     let todayTotalMs = 0, lifetimeMs = 0, longestSessionMs = 0;
     let currentCorrectAnswer = "", currentQuestionText = "", currentExplanationText = "";
     let todos = { today: [], upcoming: [] };
-    let dailyGoalMin = 180; // 1日の目標勉強時間（分）デフォルト3時間
+    let dailyGoalMap = [180, 180, 180, 180, 180, 180, 180]; // 日,月,火,水,木,金,土 の目標（分） getDay()で参照
     let lastAlertMin = 0; // 離席アラートを最後に鳴らした経過分数
 
     function getLogicalDate(dateObj) {
@@ -397,12 +454,17 @@
       if (savedLongest) longestSessionMs = parseInt(savedLongest, 10);
       const savedTodos = localStorage.getItem('cbt_todos');
       if (savedTodos) todos = JSON.parse(savedTodos);
-      const savedGoal = localStorage.getItem('cbt_daily_goal_min');
-      if (savedGoal) dailyGoalMin = parseInt(savedGoal, 10);
-
-      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        Notification.requestPermission().catch(() => {});
+      const savedGoalMap = localStorage.getItem('cbt_daily_goal_map');
+      if (savedGoalMap) {
+        dailyGoalMap = JSON.parse(savedGoalMap);
+      } else {
+        const oldGoal = localStorage.getItem('cbt_daily_goal_min');
+        if (oldGoal) dailyGoalMap = new Array(7).fill(parseInt(oldGoal, 10));
       }
+
+      // 通知許可のリクエストはページ読み込み時ではなく、ユーザーが実際にタップした
+      // タイミング（勉強スタートボタン）で行う。iOSはページ読み込み時の自動リクエストを
+      // 無視/ブロックすることがあるため。
 
       updateDisplay(todayTotalMs, 'total-time');
       updateDisplay(longestSessionMs, 'stat-longest-session');
@@ -422,22 +484,33 @@
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
     }
+    const GOAL_UI_IDS = ['goal-mon','goal-tue','goal-wed','goal-thu','goal-fri','goal-sat','goal-sun'];
+    const GOAL_UI_DAYIDX = [1,2,3,4,5,6,0]; // 各UI欄が対応する Date.getDay() の値
+
     function toggleSettings() {
       const el = document.getElementById('settings-area'); el.style.display = el.style.display === 'block' ? 'none' : 'block';
       document.getElementById('api-key-input').value = localStorage.getItem('cbt_gemini_api_key') || '';
-      document.getElementById('daily-goal-input').value = dailyGoalMin / 60;
+      GOAL_UI_IDS.forEach((id, j) => {
+        document.getElementById(id).value = dailyGoalMap[GOAL_UI_DAYIDX[j]] / 60;
+      });
     }
     function saveApiKey() {
       const key = document.getElementById('api-key-input').value.trim();
       if(key) { localStorage.setItem('cbt_gemini_api_key', key); alert('保存しました！'); document.getElementById('settings-area').style.display = 'none'; }
     }
     function saveDailyGoal() {
-      const hours = parseFloat(document.getElementById('daily-goal-input').value);
-      if (!hours || hours <= 0) return;
-      dailyGoalMin = Math.round(hours * 60);
-      localStorage.setItem('cbt_daily_goal_min', dailyGoalMin);
+      const newMap = dailyGoalMap.slice();
+      let ok = true;
+      GOAL_UI_IDS.forEach((id, j) => {
+        const hours = parseFloat(document.getElementById(id).value);
+        if (isNaN(hours) || hours < 0) { ok = false; return; }
+        newMap[GOAL_UI_DAYIDX[j]] = Math.round(hours * 60);
+      });
+      if (!ok) { alert('数値を正しく入力してください。'); return; }
+      dailyGoalMap = newMap;
+      localStorage.setItem('cbt_daily_goal_map', JSON.stringify(dailyGoalMap));
       renderStreak(); updateGoalGap(todayTotalMs);
-      alert(`1日の目標を ${hours}時間 に設定しました！`);
+      alert('曜日ごとの目標を保存しました！');
       document.getElementById('settings-area').style.display = 'none';
     }
 
@@ -526,23 +599,23 @@
       } catch (e) {}
     }
 
-    function computeStreak(goalMin) {
-      const goalMs = goalMin * 60000;
+    function computeStreak() {
       const dateKeyFor = (d) => "cbt_time_" + d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+      const goalMsFor = (d) => dailyGoalMap[d.getDay()] * 60000;
       const todayMs = parseInt(localStorage.getItem(dateKeyFor(logicalToday)) || '0', 10);
-      const includeToday = todayMs >= goalMs;
+      const includeToday = todayMs >= goalMsFor(logicalToday);
       let streak = includeToday ? 1 : 0;
       for (let i = 1; i < 400; i++) {
         const d = new Date(logicalToday); d.setDate(d.getDate() - i);
         const ms = parseInt(localStorage.getItem(dateKeyFor(d)) || '0', 10);
-        if (ms >= goalMs) streak++; else break;
+        if (ms >= goalMsFor(d)) streak++; else break;
       }
       return { streak, includeToday };
     }
 
     function renderStreak() {
       const el = document.getElementById('streak-display'); if (!el) return;
-      const { streak, includeToday } = computeStreak(dailyGoalMin);
+      const { streak, includeToday } = computeStreak();
       if (streak === 0) {
         el.innerText = `🔥 連続達成記録: まだ0日（今日から始めよう！）`;
       } else if (includeToday) {
@@ -554,7 +627,7 @@
 
     function updateGoalGap(currentMs) {
       const el = document.getElementById('goal-gap'); if (!el) return;
-      const remain = dailyGoalMin * 60000 - currentMs;
+      const remain = dailyGoalMap[logicalToday.getDay()] * 60000 - currentMs;
       if (remain <= 0) {
         el.innerText = `🎯 今日の目標達成！(+${formatShort(-remain)})`;
         el.style.color = '#4caf50';
@@ -597,10 +670,15 @@
 
     function toggleTimer() {
       const btn = document.getElementById('main-btn'); const msg = document.getElementById('message');
+      const planeWindow = document.getElementById('plane-window'); const planeCaption = document.getElementById('plane-caption');
       if (!isRunning) {
         isRunning = true; sessionStartTime = Date.now(); lastAlertMin = 0;
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+          Notification.requestPermission().catch(() => {});
+        }
         btn.innerText = "勉強おわり（5分未満はサボり記録）"; btn.classList.add('running');
         msg.innerText = "集中タイム！スマホを伏せてペンを持とう。"; msg.style.color = "#d68f84";
+        planeWindow.classList.add('flying'); planeCaption.innerText = "✈️ 集中フライト中…雲の上を巡航中";
         updateElapsed();
         sessionTimerId = setInterval(() => {
           const currentSessionMs = Date.now() - sessionStartTime;
@@ -618,13 +696,16 @@
         localStorage.setItem(todayKey, todayTotalMs); localStorage.setItem('cbt_lifetime_ms', lifetimeMs); localStorage.setItem('cbt_last_record_time', Date.now());
         btn.innerText = "勉強を再開する！"; btn.classList.remove('running');
         updateDisplay(0, 'current-session'); updateDisplay(todayTotalMs, 'total-time'); updateElapsed();
+        planeWindow.classList.remove('flying');
         
         if (currentSessionMs < 300000) {
           const m = Math.floor(currentSessionMs / 60000); const s = Math.floor((currentSessionMs % 60000) / 1000);
           localStorage.setItem("penalty_" + Date.now(), `${m}分${s}秒でサボり`);
           msg.innerText = "カレンダーに『サボり記録』が刻まれました…。"; msg.style.color = "#ff6b6b";
+          planeCaption.innerText = "🛬 早めの着陸…（サボり記録）";
         } else {
           msg.innerText = "よくがんばったねえらい！"; msg.style.color = "#a4d3c2";
+          planeCaption.innerText = "🛬 無事着陸！お疲れ様でした";
         }
         renderCalendarAndStats(); renderGimmicks();
         renderStreak(); updateGoalGap(todayTotalMs);
@@ -690,21 +771,88 @@
       return grads[i % grads.length];
     }
 
+    const CAMPUS_COLS = 3, CAMPUS_ROWS = 6, TILE_W = 64, TILE_H = 32;
+    const CAMPUS_ORIGIN_X = 264, CAMPUS_ORIGIN_Y = 47;
+    const SVG_NS = "http://www.w3.org/2000/svg";
+
+    function isoPos(col, row) {
+      return { x: (col - row) * (TILE_W / 2) + CAMPUS_ORIGIN_X, y: (col + row) * (TILE_H / 2) + CAMPUS_ORIGIN_Y };
+    }
+    function svgEl(tag, attrs) {
+      const el = document.createElementNS(SVG_NS, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+    function shadeHex(hex, factor) {
+      const h = hex.replace('#', '');
+      let r = Math.round(parseInt(h.substring(0, 2), 16) * factor);
+      let g = Math.round(parseInt(h.substring(2, 4), 16) * factor);
+      let b = Math.round(parseInt(h.substring(4, 6), 16) * factor);
+      r = Math.min(255, Math.max(0, r)); g = Math.min(255, Math.max(0, g)); b = Math.min(255, Math.max(0, b));
+      return `rgb(${r},${g},${b})`;
+    }
+    function buildingHeight(i) { return 16 + i * 5; }
+
+    function drawGroundTile(svg, col, row, fill, stroke, dash) {
+      const p = isoPos(col, row);
+      const pts = [
+        [p.x, p.y], [p.x + TILE_W / 2, p.y + TILE_H / 2],
+        [p.x, p.y + TILE_H], [p.x - TILE_W / 2, p.y + TILE_H / 2]
+      ].map(pt => pt.join(',')).join(' ');
+      const attrs = { points: pts, fill: fill };
+      if (stroke) { attrs.stroke = stroke; attrs['stroke-width'] = 1; }
+      if (dash) attrs['stroke-dasharray'] = dash;
+      svg.appendChild(svgEl('polygon', attrs));
+      return p;
+    }
+    function drawBuildingCube(svg, col, row, height, roofColor, iconEmoji, animate) {
+      const p = isoPos(col, row);
+      const leftColor = shadeHex(roofColor, 0.72), rightColor = shadeHex(roofColor, 0.52);
+      const N = [p.x, p.y - height], E = [p.x + TILE_W / 2, p.y + TILE_H / 2 - height];
+      const S = [p.x, p.y + TILE_H - height], W = [p.x - TILE_W / 2, p.y + TILE_H / 2 - height];
+      const gS = [p.x, p.y + TILE_H], gW = [p.x - TILE_W / 2, p.y + TILE_H / 2], gE = [p.x + TILE_W / 2, p.y + TILE_H / 2];
+      const g = svgEl('g', { class: animate ? 'iso-building pop-in' : 'iso-building' });
+      g.appendChild(svgEl('polygon', { points: [gW, gS, S, W].map(pt => pt.join(',')).join(' '), fill: leftColor }));
+      g.appendChild(svgEl('polygon', { points: [gS, gE, E, S].map(pt => pt.join(',')).join(' '), fill: rightColor }));
+      g.appendChild(svgEl('polygon', { points: [N, E, S, W].map(pt => pt.join(',')).join(' '), fill: roofColor }));
+      const icon = svgEl('text', { x: p.x, y: p.y + TILE_H / 2 - height + 5, 'text-anchor': 'middle', 'font-size': 14 });
+      icon.textContent = iconEmoji;
+      g.appendChild(icon);
+      svg.appendChild(g);
+    }
+
     let prevBuiltCount = -1; // -1 = 初回ロード（アニメーションなし）
     function renderHospital(totalMin) {
-      const stageEl = document.getElementById('campus-stage'); stageEl.innerHTML = '';
+      const svg = document.getElementById('campus-svg'); svg.innerHTML = '';
       let builtCount = 0;
       hospitalStages.forEach((s, i) => { if (totalMin >= s.reqMin) builtCount = i + 1; });
-      hospitalStages.forEach((s, i) => {
+
+      // 外周の道路タイル（装飾）
+      for (let row = -1; row <= CAMPUS_ROWS; row++) {
+        for (let col = -1; col <= CAMPUS_COLS; col++) {
+          const isBorder = row === -1 || row === CAMPUS_ROWS || col === -1 || col === CAMPUS_COLS;
+          if (!isBorder) continue;
+          drawGroundTile(svg, col, row, '#9aa0a6', '#7c8288');
+        }
+      }
+
+      // 建物タイルを奥から手前へ順に描画（ペインターズアルゴリズム）
+      const cells = hospitalStages.map((s, i) => ({ s, i, col: i % CAMPUS_COLS, row: Math.floor(i / CAMPUS_COLS) }));
+      cells.sort((a, b) => (a.row + a.col) - (b.row + b.col) || a.col - b.col);
+
+      cells.forEach(({ s, i, col, row }) => {
         const isBuilt = i < builtCount;
         const justBuilt = isBuilt && prevBuiltCount !== -1 && i >= prevBuiltCount;
-        const plot = document.createElement('div');
-        plot.className = 'building-plot' + (justBuilt ? ' pop-in' : '');
-        plot.innerHTML = isBuilt
-          ? `<div class="building3d"><div class="b-roof" style="border-bottom-color:${roofPalette(i)}"></div><div class="b-body"><span>${s.icon}</span></div><div class="b-shadow"></div></div><div class="building-name">${s.name}</div>`
-          : `<div class="empty-lot">🚧</div><div class="building-name faded">${s.name}</div>`;
-        stageEl.appendChild(plot);
+        if (!isBuilt) {
+          const p = drawGroundTile(svg, col, row, '#bfe3a0', '#6fae6f', '4 3');
+          const t = svgEl('text', { x: p.x, y: p.y + TILE_H / 2 + 5, 'text-anchor': 'middle', 'font-size': 13 });
+          t.textContent = '🚧'; svg.appendChild(t);
+        } else {
+          drawGroundTile(svg, col, row, '#8fca8f');
+          drawBuildingCube(svg, col, row, buildingHeight(i), roofPalette(i), s.icon, justBuilt);
+        }
       });
+
       prevBuiltCount = builtCount;
       const nextHosp = hospitalStages[builtCount];
       document.getElementById('hospital-desc').innerText = nextHosp ? `次の増設 (${nextHosp.name}) まであと ${nextHosp.reqMin - totalMin}分` : "病院は完全に発展しました！";
