@@ -10,6 +10,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CBT Voyage">
 <meta name="theme-color" content="#ffb6a3">
+<link rel="manifest" href="manifest.json">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <style>
   body { font-family: 'Quicksand', 'Rounded Mplus 1c', 'Helvetica Neue', sans-serif; background-color: #fff9f5; color: #5c4a44; text-align: center; padding: 20px 10px; margin: 0; }
   .container { background-color: #ffffff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(200, 180, 170, 0.2); max-width: 440px; margin: 0 auto; border: 2px solid #ffe8df; position: relative; text-align: left; }
@@ -84,6 +88,14 @@
   }
   .plane-window-outer:not(.flying) .sky-photo { animation-play-state: paused; }
   @keyframes driftSky { from { background-position-x: 0; } to { background-position-x: -1800px; } }
+  .sky-video {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  }
+  .sky-warm-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(200deg, rgba(255,183,110,0.32) 0%, rgba(255,140,120,0.12) 35%, rgba(40,30,60,0.18) 100%);
+    mix-blend-mode: soft-light;
+  }
   .window-shine {
     position: absolute; top: 5%; left: 12%; width: 24%; height: 60%;
     background: linear-gradient(120deg, rgba(255,255,255,0.3), rgba(255,255,255,0) 65%);
@@ -91,6 +103,13 @@
   }
   .plane-caption { margin-top: 8px; font-size: 0.78em; font-weight: bold; color: #a68c86; text-align: center; }
   .plane-window-outer.flying .plane-caption { color: #d68f84; }
+
+  /* --- Google ログイン / クラウド同期 --- */
+  .auth-btn { position: absolute; top: 15px; left: 15px; background: none; border: none; font-size: 0.78em; font-weight: bold; color: #d68f84; cursor: pointer; padding: 4px 8px; border-radius: 10px; }
+  .auth-btn.signed-out { background: #fff0eb; }
+  .auth-panel { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 6px; font-size: 0.72em; color: #a4817a; font-weight: bold; }
+  .auth-avatar { width: 22px; height: 22px; border-radius: 50%; }
+  .sync-status { font-size: 0.68em; color: #a4d3c2; }
   .motivation-box { display: flex; flex-direction: column; gap: 6px; background-color: #fff7f2; border: 2px dashed #ffb6a3; padding: 10px 14px; border-radius: 14px; margin-bottom: 15px; text-align: center; }
   .streak-display { font-weight: bold; color: #e2725b; font-size: 0.95em; }
   .goal-gap { font-weight: bold; font-size: 0.95em; color: #d68f84; }
@@ -195,6 +214,7 @@
 <body>
   <div class="container">
     <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    <div id="auth-area"></div>
     <h1>CBT Voyage 🩺✈️</h1>
     
     <div class="urgency">
@@ -217,6 +237,17 @@
         <div><span>日</span><input type="number" id="goal-sun" step="0.5" min="0"></div>
       </div>
       <button onclick="saveDailyGoal()">保存</button>
+
+      <div class="migrate-block">
+        <label>🔔 離席通知の間隔（分）:</label>
+        <input type="number" id="alert-interval-input" step="1" min="1">
+        <button onclick="saveAlertInterval()">保存</button>
+        <div id="notif-permission-status" style="margin-top:8px; font-size:0.85em; color:#a4817a;"></div>
+        <button id="notif-permission-btn" onclick="requestNotificationPermission()">通知を許可する</button>
+        <p style="font-size:0.75em; color:#a4817a; margin-top:8px; line-height:1.5;">
+          ※ 通知はこのタブ/アプリを開いている間のみ届きます。iPhoneでは共有ボタン→「ホーム画面に追加」をすると多少安定しますが、Safariやアプリを完全に終了・強制終了すると届きません。
+        </p>
+      </div>
 
       <div class="migrate-block">
         <label>📤 引っ越し元でエクスポート（このサイトのデータを書き出す）:</label>
@@ -296,6 +327,8 @@
           <div class="plane-bezel">
             <div class="plane-glass">
               <div class="sky-photo"></div>
+              <video id="sky-video" class="sky-video" src="assets/sky_video.mp4" muted loop playsinline webkit-playsinline preload="auto"></video>
+              <div class="sky-warm-overlay"></div>
               <div class="window-shine"></div>
             </div>
           </div>
@@ -431,6 +464,7 @@
     let todos = { today: [], upcoming: [] };
     let dailyGoalMap = [180, 180, 180, 180, 180, 180, 180]; // 日,月,火,水,木,金,土 の目標（分） getDay()で参照
     let lastAlertMin = 0; // 離席アラートを最後に鳴らした経過分数
+    let alertIntervalMin = 20; // 離席通知の間隔（分・設定画面から変更可）
 
     function getLogicalDate(dateObj) {
       const d = new Date(dateObj); d.setHours(d.getHours() - 3); return d;
@@ -461,10 +495,17 @@
         const oldGoal = localStorage.getItem('cbt_daily_goal_min');
         if (oldGoal) dailyGoalMap = new Array(7).fill(parseInt(oldGoal, 10));
       }
+      const savedAlertInterval = localStorage.getItem('cbt_alert_interval_min');
+      if (savedAlertInterval) alertIntervalMin = parseInt(savedAlertInterval, 10);
 
       // 通知許可のリクエストはページ読み込み時ではなく、ユーザーが実際にタップした
       // タイミング（勉強スタートボタン）で行う。iOSはページ読み込み時の自動リクエストを
       // 無視/ブロックすることがあるため。
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+      initFirebaseAuth();
 
       updateDisplay(todayTotalMs, 'total-time');
       updateDisplay(longestSessionMs, 'stat-longest-session');
@@ -493,10 +534,36 @@
       GOAL_UI_IDS.forEach((id, j) => {
         document.getElementById(id).value = dailyGoalMap[GOAL_UI_DAYIDX[j]] / 60;
       });
+      document.getElementById('alert-interval-input').value = alertIntervalMin;
+      updateNotifPermissionStatus();
     }
     function saveApiKey() {
       const key = document.getElementById('api-key-input').value.trim();
       if(key) { localStorage.setItem('cbt_gemini_api_key', key); alert('保存しました！'); document.getElementById('settings-area').style.display = 'none'; }
+    }
+    function saveAlertInterval() {
+      const val = parseInt(document.getElementById('alert-interval-input').value, 10);
+      if (isNaN(val) || val < 1) { alert('1以上の数値を入力してください。'); return; }
+      alertIntervalMin = val;
+      localStorage.setItem('cbt_alert_interval_min', String(val));
+      alert('離席通知の間隔を保存しました！');
+    }
+    function updateNotifPermissionStatus() {
+      const statusEl = document.getElementById('notif-permission-status');
+      const btnEl = document.getElementById('notif-permission-btn');
+      if (!statusEl || !btnEl) return;
+      if (typeof Notification === 'undefined') {
+        statusEl.innerText = 'この端末/ブラウザは通知に対応していません。';
+        btnEl.style.display = 'none';
+        return;
+      }
+      const labels = { granted: '✅ 通知は許可されています', denied: '🚫 通知がブロックされています（ブラウザの設定から変更してください）', default: '通知はまだ許可されていません' };
+      statusEl.innerText = labels[Notification.permission] || '';
+      btnEl.style.display = Notification.permission === 'default' ? 'inline-block' : 'none';
+    }
+    function requestNotificationPermission() {
+      if (typeof Notification === 'undefined') return;
+      Notification.requestPermission().finally(updateNotifPermissionStatus);
     }
     function saveDailyGoal() {
       const newMap = dailyGoalMap.slice();
@@ -510,17 +577,30 @@
       dailyGoalMap = newMap;
       localStorage.setItem('cbt_daily_goal_map', JSON.stringify(dailyGoalMap));
       renderStreak(); updateGoalGap(todayTotalMs);
+      scheduleCloudSave();
       alert('曜日ごとの目標を保存しました！');
       document.getElementById('settings-area').style.display = 'none';
     }
 
-    function exportData() {
+    // クラウド同期からは除外するキー（端末固有の秘密情報など）
+    const CLOUD_SYNC_EXCLUDE_KEYS = ['cbt_gemini_api_key'];
+
+    function collectCbtLocalData(includeExcluded) {
       const data = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith('cbt_') || key.startsWith('penalty_'))) data[key] = localStorage.getItem(key);
+        if (!key || !(key.startsWith('cbt_') || key.startsWith('penalty_'))) continue;
+        if (!includeExcluded && CLOUD_SYNC_EXCLUDE_KEYS.includes(key)) continue;
+        data[key] = localStorage.getItem(key);
       }
-      const json = JSON.stringify(data);
+      return data;
+    }
+    function applyCbtLocalData(data) {
+      Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+    }
+
+    function exportData() {
+      const json = JSON.stringify(collectCbtLocalData(true));
       const ta = document.getElementById('export-output');
       ta.value = json; ta.style.display = 'block';
       document.getElementById('copy-export-btn').style.display = 'inline-block';
@@ -539,13 +619,111 @@
       if (!raw) { alert('貼り付けるテキストがありません。'); return; }
       try {
         const data = JSON.parse(raw);
-        Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+        applyCbtLocalData(data);
         alert('インポートが完了しました！ページを再読み込みします。');
         location.reload();
       } catch (e) {
         alert('読み込みに失敗しました。コピーしたテキストが正しいか確認してください。');
       }
     }
+
+    // ---- Firebase（友人自身のFirebaseプロジェクトのconfigに書き換えてください） ----
+    // Firebaseコンソール > プロジェクトの設定 > 全般 > マイアプリ で取得できる値を貼り付ける。
+    // apiKeyが "YOUR_" のままの間はログイン機能は無効化され、今まで通りlocalStorageのみで動作する。
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    let fbAuth = null, fbDb = null, currentUser = null, cloudSaveTimer = null;
+
+    function isFirebaseConfigured() {
+      return !!(firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('YOUR_'));
+    }
+
+    function initFirebaseAuth() {
+      if (!isFirebaseConfigured() || typeof firebase === 'undefined') return;
+      try {
+        firebase.initializeApp(firebaseConfig);
+        fbAuth = firebase.auth();
+        fbDb = firebase.firestore();
+        fbAuth.onAuthStateChanged(handleAuthStateChanged);
+      } catch (e) {
+        console.error('Firebaseの初期化に失敗しました', e);
+      }
+    }
+
+    function renderAuthUI() {
+      const authArea = document.getElementById('auth-area');
+      if (!authArea || !isFirebaseConfigured()) return;
+      if (!currentUser) {
+        authArea.innerHTML = '<button class="auth-btn signed-out" onclick="signInWithGoogle()">🔑 Googleでログイン</button>';
+        return;
+      }
+      const avatar = currentUser.photoURL ? `<img class="auth-avatar" src="${currentUser.photoURL}" referrerpolicy="no-referrer" alt="">` : '👤';
+      authArea.innerHTML = `<div class="auth-panel">${avatar}<span id="sync-status" class="sync-status">☁️ 同期待ち</span><button class="auth-btn" onclick="signOutUser()">ログアウト</button></div>`;
+    }
+
+    function setSyncStatus(text) {
+      const el = document.getElementById('sync-status');
+      if (el) el.innerText = text;
+    }
+
+    async function handleAuthStateChanged(user) {
+      currentUser = user;
+      renderAuthUI();
+      if (!user || !fbDb) return;
+      try {
+        const snap = await fbDb.collection('users').doc(user.uid).get();
+        if (snap.exists) {
+          const cloudData = snap.data().data || {};
+          const hasLocalData = Object.keys(collectCbtLocalData(false)).length > 0;
+          const shouldRestore = !hasLocalData || confirm('クラウドに保存されたデータがあります。読み込みますか？（この端末に今あるデータは上書きされます）');
+          if (shouldRestore) {
+            applyCbtLocalData(cloudData);
+            location.reload();
+            return;
+          }
+        }
+        setSyncStatus('☁️ 同期済み');
+      } catch (e) {
+        console.error('クラウドからの読み込みに失敗しました', e);
+        setSyncStatus('⚠️ 同期エラー');
+      }
+    }
+
+    function signInWithGoogle() {
+      if (!fbAuth) return;
+      fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch((e) => {
+        alert('ログインに失敗しました: ' + e.message);
+      });
+    }
+    function signOutUser() {
+      if (fbAuth) fbAuth.signOut();
+    }
+
+    function scheduleCloudSave() {
+      if (!currentUser || !fbDb) return;
+      setSyncStatus('⏳ 保存中...');
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(async () => {
+        try {
+          await fbDb.collection('users').doc(currentUser.uid).set({
+            data: collectCbtLocalData(false),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          setSyncStatus('☁️ 同期済み');
+        } catch (e) {
+          console.error('クラウドへの保存に失敗しました', e);
+          setSyncStatus('⚠️ 同期エラー');
+        }
+      }, 1500);
+    }
+
     function formatTime(ms) {
       const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
       const h = Math.floor(totalSeconds / 3600); const m = Math.floor((totalSeconds % 3600) / 60); const s = totalSeconds % 60;
@@ -568,11 +746,10 @@
       if (isRunning) { el.innerText = "計測中..."; el.style.color = "#a4d3c2"; lastAlertMin = 0; return; }
       if (!lastTime) { el.innerText = "記録なし"; return; }
       const diffMin = Math.floor((Date.now() - parseInt(lastTime, 10)) / 60000);
-      if (diffMin >= 20) { el.innerText = `${diffMin}分 経過！すぐ再開を！`; el.style.color = "#ff6b6b"; } 
+      if (diffMin >= alertIntervalMin) { el.innerText = `${diffMin}分 経過！すぐ再開を！`; el.style.color = "#ff6b6b"; }
       else { el.innerText = `${diffMin}分`; el.style.color = "#d68f84"; }
 
-      const ALERT_INTERVAL = 20; // 20分おきに離席アラートを再送
-      if (diffMin >= ALERT_INTERVAL && diffMin - lastAlertMin >= ALERT_INTERVAL) {
+      if (diffMin >= alertIntervalMin && diffMin - lastAlertMin >= alertIntervalMin) {
         lastAlertMin = diffMin;
         fireAwayAlert(diffMin);
       }
@@ -647,6 +824,7 @@
         ulUpcoming.innerHTML += `<li class="${todo.done ? 'completed' : ''}"><input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo('upcoming', ${index})"><span class="todo-text">${todo.text}</span><button class="btn-move" onclick="moveTodoToToday(${index})">↑ 今日へ</button><button class="btn-del" onclick="deleteTodo('upcoming', ${index})">×</button></li>`;
       });
       localStorage.setItem('cbt_todos', JSON.stringify(todos));
+      scheduleCloudSave();
     }
     function addTodo(type) {
       const input = document.getElementById(`input-${type}`); const text = input.value.trim();
@@ -664,6 +842,7 @@
       localStorage.setItem(todayKey, todayTotalMs); localStorage.setItem('cbt_lifetime_ms', lifetimeMs);
       updateDisplay(todayTotalMs, 'total-time'); renderCalendarAndStats(); renderGimmicks();
       renderStreak(); updateGoalGap(todayTotalMs);
+      scheduleCloudSave();
       const msg = document.getElementById('message');
       msg.innerText = minutes > 0 ? `${minutes}分 追加しました！` : `${Math.abs(minutes)}分 減らしました。`; msg.style.color = "#a4d3c2";
     }
@@ -679,6 +858,7 @@
         btn.innerText = "勉強おわり（5分未満はサボり記録）"; btn.classList.add('running');
         msg.innerText = "集中タイム！スマホを伏せてペンを持とう。"; msg.style.color = "#d68f84";
         planeWindow.classList.add('flying'); planeCaption.innerText = "✈️ 集中フライト中…雲の上を巡航中";
+        const skyVideo = document.getElementById('sky-video'); if (skyVideo) skyVideo.play().catch(() => {});
         updateElapsed();
         sessionTimerId = setInterval(() => {
           const currentSessionMs = Date.now() - sessionStartTime;
@@ -697,7 +877,8 @@
         btn.innerText = "勉強を再開する！"; btn.classList.remove('running');
         updateDisplay(0, 'current-session'); updateDisplay(todayTotalMs, 'total-time'); updateElapsed();
         planeWindow.classList.remove('flying');
-        
+        const skyVideoEl = document.getElementById('sky-video'); if (skyVideoEl) skyVideoEl.pause();
+
         if (currentSessionMs < 300000) {
           const m = Math.floor(currentSessionMs / 60000); const s = Math.floor((currentSessionMs % 60000) / 1000);
           localStorage.setItem("penalty_" + Date.now(), `${m}分${s}秒でサボり`);
@@ -709,6 +890,7 @@
         }
         renderCalendarAndStats(); renderGimmicks();
         renderStreak(); updateGoalGap(todayTotalMs);
+        scheduleCloudSave();
       }
     }
 
@@ -987,7 +1169,7 @@
       } finally { document.getElementById('loader-sns').style.display = "none"; renderTimeline(); }
     }
 
-    function saveTweet(item) { const tweets = JSON.parse(localStorage.getItem('cbt_tweets') || '[]'); tweets.push(item); localStorage.setItem('cbt_tweets', JSON.stringify(tweets)); }
+    function saveTweet(item) { const tweets = JSON.parse(localStorage.getItem('cbt_tweets') || '[]'); tweets.push(item); localStorage.setItem('cbt_tweets', JSON.stringify(tweets)); scheduleCloudSave(); }
     function renderTimeline() {
       const tl = document.getElementById('timeline'); tl.innerHTML = ''; const tweets = JSON.parse(localStorage.getItem('cbt_tweets') || '[]');
       const userTweets = tweets.filter(t => t.type === 'user').reverse(); if (userTweets.length === 0) return;

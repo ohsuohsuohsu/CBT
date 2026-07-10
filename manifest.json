@@ -1,0 +1,12 @@
+{
+  "name": "CBT Voyage",
+  "short_name": "CBT Voyage",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff9f5",
+  "theme_color": "#ffb6a3",
+  "icons": [
+    { "src": "assets/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
