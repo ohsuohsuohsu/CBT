@@ -46,36 +46,15 @@
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
 
   /* --- フォーカスフライト（飛行機の窓） --- */
+  /* 動画自体に窓枠（フレーム・シェード・ガラス）が焼き込まれているため、
+     二重窓にならないよう自前の窓フレームは持たず、この1枚だけを窓として見せる。 */
   .plane-window-outer { display: flex; flex-direction: column; align-items: center; margin: 4px 0 20px; }
-  .plane-frame {
-    position: relative;
-    width: 168px; height: 208px;
-    background: radial-gradient(ellipse at 50% 42%, #3d3d40 0%, #222224 55%, #0c0c0d 100%);
-    border-radius: 48% 48% 42% 42% / 40% 40% 28% 28%;
-    padding: 14px;
-    box-sizing: border-box;
-    box-shadow: 0 14px 26px rgba(0,0,0,0.4);
-  }
-  .shade-box {
-    position: absolute; top: 7px; left: 50%; width: 58px; height: 15px; margin-left: -29px;
-    background: linear-gradient(180deg, #4d4d50, #1b1b1d);
-    border-radius: 8px 8px 3px 3px;
-    box-shadow: inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.5);
-  }
-  .plane-bezel {
-    position: relative; width: 100%; height: 100%;
-    background: linear-gradient(155deg, #ece9e3, #bdb9b0 45%, #8d8a83 100%);
-    border-radius: 46% 46% 40% 40% / 38% 38% 26% 26%;
-    padding: 8px;
-    box-sizing: border-box;
-    box-shadow: inset 0 2px 3px rgba(255,255,255,0.65), inset 0 -3px 6px rgba(0,0,0,0.35);
-  }
   .plane-glass {
-    position: relative; width: 100%; height: 100%; overflow: hidden;
-    border-radius: 43% 43% 37% 37% / 35% 35% 24% 24%;
+    position: relative; width: 230px; height: 270px; overflow: hidden;
+    border-radius: 14% 14% 10% 10% / 12% 12% 8% 8%;
     filter: saturate(0.5) brightness(0.65);
     transition: filter 1s ease;
-    box-shadow: inset 0 0 16px rgba(0,0,0,0.55);
+    box-shadow: 0 14px 26px rgba(0,0,0,0.4);
   }
   .plane-window-outer.flying .plane-glass { filter: saturate(1.05) brightness(1); }
   .sky-photo {
@@ -322,16 +301,11 @@
       </div>
 
       <div class="plane-window-outer" id="plane-window">
-        <div class="plane-frame">
-          <div class="shade-box"></div>
-          <div class="plane-bezel">
-            <div class="plane-glass">
-              <div class="sky-photo"></div>
-              <video id="sky-video" class="sky-video" src="assets/sky_video.mp4" muted loop playsinline webkit-playsinline preload="auto"></video>
-              <div class="sky-warm-overlay"></div>
-              <div class="window-shine"></div>
-            </div>
-          </div>
+        <div class="plane-glass">
+          <div class="sky-photo"></div>
+          <video id="sky-video" class="sky-video" src="assets/sky_video.mp4" muted loop playsinline webkit-playsinline preload="auto"></video>
+          <div class="sky-warm-overlay"></div>
+          <div class="window-shine"></div>
         </div>
         <div class="plane-caption" id="plane-caption">✈️ 出発前（勉強スタートでフライト開始）</div>
       </div>
