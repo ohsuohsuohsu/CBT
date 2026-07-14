@@ -636,6 +636,10 @@
       if (el) el.innerText = text;
     }
 
+    function getCloudSyncAckKey(uid) {
+      return `cbt_cloud_sync_ack_${uid}`;
+    }
+
     async function handleAuthStateChanged(user) {
       currentUser = user;
       renderAuthUI();
@@ -644,8 +648,15 @@
         const snap = await fbDb.collection('users').doc(user.uid).get();
         if (snap.exists) {
           const cloudData = snap.data().data || {};
+          const cloudUpdatedAt = snap.data().updatedAt;
+          const cloudVersion = cloudUpdatedAt && cloudUpdatedAt.toMillis ? String(cloudUpdatedAt.toMillis()) : 'unknown';
           const hasLocalData = Object.keys(collectCbtLocalData(false)).length > 0;
-          const shouldRestore = !hasLocalData || confirm('クラウドに保存されたデータがあります。読み込みますか？（この端末に今あるデータは上書きされます）');
+          const ackKey = getCloudSyncAckKey(user.uid);
+          const alreadyAcked = hasLocalData && localStorage.getItem(ackKey) === cloudVersion;
+          const shouldRestore = !hasLocalData || (!alreadyAcked && confirm('クラウドに保存されたデータがあります。読み込みますか？（この端末に今あるデータは上書きされます）'));
+          if (!alreadyAcked) {
+            localStorage.setItem(ackKey, cloudVersion);
+          }
           if (shouldRestore) {
             applyCbtLocalData(cloudData);
             location.reload();
